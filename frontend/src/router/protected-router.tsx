@@ -9,7 +9,7 @@ export default function ProtectedRoutes() {
   }
 
   if (!isSignedIn) {
-    return <Navigate to="/" />;
+    <Navigate to="/sign-in" />;
   }
 
   return <Outlet />;
