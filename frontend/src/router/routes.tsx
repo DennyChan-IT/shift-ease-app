@@ -6,6 +6,7 @@ import AdminSignUp from "../pages/AdminSignUp";
 import { Sidebar } from "../layouts/sidebar";
 import { Dashboard } from "../pages/Dashboard";
 import { CreateOrganization } from "../components/CreateOrganization";
+import Organizations from "../pages/Organizations";
 
 export const router = createBrowserRouter([
   {
@@ -30,15 +31,16 @@ export const router = createBrowserRouter([
             path: "/dashboard",
             element: <Dashboard />,
             children: [
-              {
-                path: "",
-                element: <Navigate to="create-organization" replace />,
-              }, // Redirect to /dashboard/create-organization
+              { path: "", element: <Navigate to="create-organization" replace /> }, // Redirect to /dashboard/create-organization
               {
                 path: "/dashboard/create-organization",
                 element: <CreateOrganization />,
               },
             ],
+          },
+          {
+            path: "/organizations",
+            element: <Organizations />,
           },
         ],
       },
