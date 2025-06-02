@@ -17,7 +17,7 @@ export function Sidebar() {
             <AiOutlineDashboard className="text-purple-600 text-3xl mb-1" />
             <span className="text-xs text-purple-600">Dashboard</span>
           </NavLink>
-          <NavLink to="/organization" className="flex flex-col items-center">
+          <NavLink to="/organizations" className="flex flex-col items-center">
             <VscOrganization className="text-purple-600 text-3xl mb-1" />
             <span className="text-xs text-purple-600">Organizations</span>
           </NavLink>

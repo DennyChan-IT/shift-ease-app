@@ -1,15 +1,13 @@
 import { useAuth } from "@clerk/clerk-react";
 import React, { useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOrganizations } from "../contexts/organization-context";
 
 export function CreateOrganization() {
   const [name, setName] = useState("");
+  const { fetchOrganizations } = useOrganizations();
   const [location, setLocation] = useState("");
   const [message, setMessage] = useState("");
   const { getToken } = useAuth();
-
-  // Get the increment function from the outlet context
-  const { incrementTotalOrganizations } = useOutletContext<{ incrementTotalOrganizations: () => void }>();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,9 +27,7 @@ export function CreateOrganization() {
         setMessage("Organization created successfully!");
         setName("");
         setLocation("");
-        
-        // Update total organizations count
-        incrementTotalOrganizations();
+        fetchOrganizations();
       } else {
         setMessage("Failed to create organization.");
       }
@@ -61,7 +57,10 @@ export function CreateOrganization() {
           onChange={(e) => setLocation(e.target.value)}
         />
 
-        <button type="submit" className="bg-purple-500 text-white py-2 px-4 rounded hover:bg-purple-700">
+        <button
+          type="submit"
+          className="bg-purple-500 text-white py-2 px-4 rounded hover:bg-purple-700"
+        >
           Create Organization
         </button>
       </form>
