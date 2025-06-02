@@ -1,12 +1,15 @@
 import { useAuth } from "@clerk/clerk-react";
 import React, { useState } from "react";
+import { useOutletContext } from "react-router-dom";
 
 export function CreateOrganization() {
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [message, setMessage] = useState("");
-  const { getToken } = useAuth()
+  const { getToken } = useAuth();
 
+  // Get the increment function from the outlet context
+  const { incrementTotalOrganizations } = useOutletContext<{ incrementTotalOrganizations: () => void }>();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +29,9 @@ export function CreateOrganization() {
         setMessage("Organization created successfully!");
         setName("");
         setLocation("");
+        
+        // Update total organizations count
+        incrementTotalOrganizations();
       } else {
         setMessage("Failed to create organization.");
       }
