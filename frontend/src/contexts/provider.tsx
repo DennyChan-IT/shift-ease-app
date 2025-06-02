@@ -4,7 +4,7 @@ import { RouterProvider } from "./router-provider";
 export function Providers() {
   return (
     <ClerkProvider>
-      <RouterProvider />
+        <RouterProvider />
     </ClerkProvider>
   );
 }

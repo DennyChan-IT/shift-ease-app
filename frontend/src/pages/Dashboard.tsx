@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/clerk-react";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
 export function Dashboard() {
@@ -11,7 +11,7 @@ export function Dashboard() {
     setActiveTab(tab);
   };
 
-  // Fetch the organization count on component mount
+  // Fetch organization count on component mount
   useEffect(() => {
     const fetchOrganizations = async () => {
       const token = await getToken();
@@ -28,7 +28,7 @@ export function Dashboard() {
         );
         if (response.ok) {
           const data = await response.json();
-          setTotalOrganizations(data.length); // Set the count from the API response
+          setTotalOrganizations(data.length);
         } else {
           console.error("Failed to fetch organizations.");
         }
@@ -39,6 +39,11 @@ export function Dashboard() {
 
     fetchOrganizations();
   }, []);
+
+  // Function to increment organization count
+  const incrementTotalOrganizations = () => {
+    setTotalOrganizations((prevCount) => prevCount + 1);
+  };
 
   return (
     <div className="w-full bg-gray-100 p-6">
@@ -59,17 +64,17 @@ export function Dashboard() {
 
       {/* Tab Navigation */}
       <div className="flex">
-        <div className="w-72 mr-5 ">
+        <div className="w-72 mr-5">
           <div className="font-semibold">Dashboard</div>
           <ul className="pr-5 h-[50vh] border-r border-r-gray-300">
             <li>
               <NavLink
                 to="/dashboard/create-organization"
-                className={`${
+                className={
                   activeTab === "Create Organization"
                     ? "text-blue-600 font-bold"
                     : "text-gray-600"
-                }`}
+                }
                 onClick={() => handleClick("Create Organization")}
               >
                 Create Organization
@@ -90,8 +95,9 @@ export function Dashboard() {
             </li>
           </ul>
         </div>
-        {/* Tab Content */}
-        <Outlet />
+
+        {/* Pass increment function to CreateOrganization */}
+        <Outlet context={{ incrementTotalOrganizations }} />
       </div>
     </div>
   );
