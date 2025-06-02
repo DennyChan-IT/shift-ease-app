@@ -1,19 +1,51 @@
-import React, { useState } from "react";
+import { useAuth } from "@clerk/clerk-react";
+import React, { useState, useEffect } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState("Create Organization");
+  const [totalOrganizations, setTotalOrganizations] = useState(0);
+  const { getToken } = useAuth();
 
   const handleClick = (tab: string) => {
     setActiveTab(tab);
   };
+
+  // Fetch the organization count on component mount
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      const token = await getToken();
+
+      try {
+        const response = await fetch(
+          "http://localhost:8080/api/organizations",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setTotalOrganizations(data.length); // Set the count from the API response
+        } else {
+          console.error("Failed to fetch organizations.");
+        }
+      } catch (error) {
+        console.error("Error fetching organization count:", error);
+      }
+    };
+
+    fetchOrganizations();
+  }, []);
 
   return (
     <div className="w-full bg-gray-100 p-6">
       <div className="flex justify-around p-6 space-x-4">
         <div className="bg-white shadow-md rounded-lg p-4 text-center w-1/3">
           <p className="text-gray-600">Total Organizations</p>
-          <h3 className="text-2xl font-bold">2</h3>
+          <h3 className="text-2xl font-bold">{totalOrganizations}</h3>
         </div>
         <div className="bg-white shadow-md rounded-lg p-4 text-center w-1/3">
           <p className="text-gray-600">Total Employees</p>
