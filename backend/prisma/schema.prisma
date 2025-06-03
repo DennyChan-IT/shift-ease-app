@@ -22,9 +22,11 @@ model Organization {
 }
 
 model Employee {
-  id             String       @id @default(uuid())
-  name           String
-  position       String
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  position  String
+  createdAt DateTime @default(now())
   organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String
 }

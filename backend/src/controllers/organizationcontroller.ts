@@ -14,7 +14,11 @@ export const getOrganizationDetails = async (req: Request, res: Response) => {
   try {
     const organizationDetails = await prisma.organization.findUnique({
       where: { id },
-      include: { employees: true },
+      include: {
+        employees: {
+          orderBy: { createdAt: "asc" }, // Ensures consistent order
+        },
+      },
     });
     res.json(organizationDetails);
   } catch (error) {
