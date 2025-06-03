@@ -13,6 +13,8 @@ import Schedules from "../pages/Schedules";
 import PublicRoutes from "./public-router";
 import PendingRequests from "../components/PendingRequests";
 import RoleProtectedRoute from "./role-protected-router";
+import { Availability } from "../pages/Availability";
+import AddAvailability from "../pages/AddAvailability";
 
 export const router = createBrowserRouter([
   
@@ -68,6 +70,18 @@ export const router = createBrowserRouter([
             path: "/schedules",
             element: <Schedules />,
           },          
+          {
+            path: "/availability",
+            element: <Availability />,
+          },          
+          {
+            path: "/add-availability",
+            element: <AddAvailability />,
+          },          
+          {
+            path: "/availability/edit/:id",
+            element: <AddAvailability />,
+          }
         ],
       },
     ],

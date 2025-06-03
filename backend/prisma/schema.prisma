@@ -28,6 +28,7 @@ model Employee {
   position  String
   createdAt DateTime @default(now())
   organization   Organization @relation(fields: [organizationId], references: [id])
+  Availabilities Availability[]
   organizationId String
 }
 
@@ -39,5 +40,26 @@ model PendingRequest {
   organizationId String
   createdAt      DateTime   @default(now())
   status         String     @default("pending") // Status: pending, approved, rejected
+}
+
+model Availability {
+  id             String   @id @default(uuid())
+  employeeId     String
+  effectiveStart DateTime
+  effectiveEnd   DateTime
+  employee       Employee @relation(fields: [employeeId], references: [id])
+  createdAt      DateTime @default(now())
+  DailyAvailabilitySlot DailyAvailabilitySlot[]
+}
+
+model DailyAvailabilitySlot {
+  id             String       @id @default(uuid())
+  availabilityId String
+  day            String       // e.g., "Monday"
+  allDay         Boolean      @default(false)
+  available      Boolean      @default(false)
+  startTime      String?
+  endTime        String?
+  availability   Availability @relation(fields: [availabilityId], references: [id])
 }
 

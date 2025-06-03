@@ -33,6 +33,30 @@ CREATE TABLE "PendingRequest" (
     CONSTRAINT "PendingRequest_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Availability" (
+    "id" TEXT NOT NULL,
+    "employeeId" TEXT NOT NULL,
+    "effectiveStart" TIMESTAMP(3) NOT NULL,
+    "effectiveEnd" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Availability_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "DailyAvailabilitySlot" (
+    "id" TEXT NOT NULL,
+    "availabilityId" TEXT NOT NULL,
+    "day" TEXT NOT NULL,
+    "allDay" BOOLEAN NOT NULL DEFAULT false,
+    "available" BOOLEAN NOT NULL DEFAULT false,
+    "startTime" TEXT,
+    "endTime" TEXT,
+
+    CONSTRAINT "DailyAvailabilitySlot_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "Employee_email_key" ON "Employee"("email");
 
@@ -41,3 +65,9 @@ CREATE UNIQUE INDEX "PendingRequest_email_key" ON "PendingRequest"("email");
 
 -- AddForeignKey
 ALTER TABLE "Employee" ADD CONSTRAINT "Employee_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Availability" ADD CONSTRAINT "Availability_employeeId_fkey" FOREIGN KEY ("employeeId") REFERENCES "Employee"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DailyAvailabilitySlot" ADD CONSTRAINT "DailyAvailabilitySlot_availabilityId_fkey" FOREIGN KEY ("availabilityId") REFERENCES "Availability"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
