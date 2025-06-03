@@ -130,10 +130,7 @@ export function AvailabilityModal({
     const defaultIs24 = defaultEndOriginal === "24:00";
     const customStartMins = timeStringToMinutes(customStart);
     const customEndForCalc = customEnd === "24:00" ? "00:00" : customEnd;
-    const customEndMins = convertInputTimeToMinutes(
-      customEndForCalc,
-      defaultIs24
-    );
+    const customEndMins = convertInputTimeToMinutes(customEndForCalc, defaultIs24);
     const defaultStartMins = timeStringToMinutes(defaultStart);
     const defaultEndMins = defaultIs24
       ? 1440
@@ -174,9 +171,7 @@ export function AvailabilityModal({
             value={customStart}
             onChange={(e) => setCustomStart(e.target.value)}
             min={defaultStart}
-            max={
-              defaultEndOriginal === "24:00" ? undefined : defaultEndOriginal
-            }
+            max={defaultEndOriginal === "24:00" ? undefined : defaultEndOriginal}
             required
             className="border p-2 rounded"
           />
@@ -196,9 +191,7 @@ export function AvailabilityModal({
             }}
             min={customStart}
             max={
-              defaultEndOriginal === "24:00"
-                ? defaultEndForInput
-                : defaultEndOriginal
+              defaultEndOriginal === "24:00" ? defaultEndForInput : defaultEndOriginal
             }
             required
             className="border p-2 rounded"
@@ -222,7 +215,7 @@ export function AvailabilityModal({
       </form>
     </dialog>
   );
-}
+};
 
 const Schedules = () => {
   const [currentWeek, setCurrentWeek] = useState<ScheduleDay[] | null>(null);
@@ -244,6 +237,10 @@ const Schedules = () => {
   const [modalEmployee, setModalEmployee] = useState<EmployeeType | null>(null);
   const [modalSlots, setModalSlots] = useState<DailyAvailabilitySlot[]>([]);
 
+  // New state to hold user role and organization for access control
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userOrganizationId, setUserOrganizationId] = useState<string | null>(null);
+
   // Initialize current week.
   useEffect(() => {
     const today = new Date();
@@ -255,6 +252,38 @@ const Schedules = () => {
     }
     setCurrentWeek(days);
   }, []);
+
+  // Fetch user details to restrict access for Manager
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      const token = await getToken();
+      try {
+        const response = await fetch("http://localhost:8080/api/user-info", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUserRole(data.position);
+          setUserOrganizationId(data.organizationId);
+          if (data.position === "Manager") {
+            // For Manager, force selected organization to be manager's own organization
+            setSelectedOrganization(data.organizationId);
+            await fetchEmployeesByOrganization(data.organizationId);
+            await fetchAvailabilities(data.organizationId);
+            await fetchScheduledShifts(data.organizationId);
+          }
+        } else {
+          console.error("Failed to fetch user info");
+        }
+      } catch (error) {
+        console.error("Error fetching user details:", error);
+      }
+    };
+    fetchUserDetails();
+  }, [getToken]);
 
   // Fetch employees for a given organization.
   const fetchEmployeesByOrganization = async (orgId: string) => {
@@ -300,11 +329,6 @@ const Schedules = () => {
     const filteredData = data.filter(
       (av) => av.employee.organizationId === orgId
     );
-    // Set available employees based on availability if needed.
-    // (This state is used for the dropdown below.)
-    // Here could also deduplicate if necessary.
-    // For simplicity, assume the API returns unique records.
-    // can adjust as needed.
     const grouped: { [employeeId: string]: Availability[] } = {};
     for (const avail of filteredData) {
       if (!grouped[avail.employeeId]) {
@@ -487,11 +511,15 @@ const Schedules = () => {
           value={selectedOrganization}
           onChange={handleOrganizationChange}
           className="p-2 border rounded"
+          disabled={userRole === "Manager"} // Disable dropdown for Manager
         >
           <option value="" disabled>
             Choose an organization
           </option>
-          {organizations.map((org) => (
+          {(userRole === "Manager"
+            ? organizations.filter((org) => org.id === userOrganizationId)
+            : organizations
+          ).map((org) => (
             <option key={org.id} value={org.id}>
               {org.name}
             </option>

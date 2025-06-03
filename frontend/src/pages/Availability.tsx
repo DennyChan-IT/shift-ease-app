@@ -30,17 +30,22 @@ export function Availability() {
     return date.toLocaleDateString();
   };
 
+  // Fetch availabilities when the component mounts
   useEffect(() => {
     const fetchAvailabilities = async () => {
       const token = await getToken();
-      const response = await fetch("http://localhost:8080/api/employees/availabilities", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await response.json();
-      setAvailabilities(data);
+      try {
+        const response = await fetch("http://localhost:8080/api/employees/availabilities", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        const data = await response.json();
+        setAvailabilities(data);
+      } catch (error) {
+        console.error("Error fetching availabilities:", error);
+      }
     };
 
     fetchAvailabilities();
@@ -48,6 +53,27 @@ export function Availability() {
 
   const handleEdit = (id: string) => {
     navigate(`/availability/edit/${id}`);
+  };
+
+  const handleDelete = async (id: string) => {
+    const token = await getToken();
+    try {
+      const response = await fetch(`http://localhost:8080/api/employees/availabilities/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        // Remove the deleted availability from state
+        setAvailabilities((prev) => prev.filter((item) => item.id !== id));
+      } else {
+        console.error("Failed to delete availability");
+      }
+    } catch (error) {
+      console.error("Error deleting availability:", error);
+    }
   };
 
   return (
@@ -80,7 +106,10 @@ export function Availability() {
                 <button onClick={() => handleEdit(availability.id)} className="text-blue-500 hover:underline">
                   Edit
                 </button>
-                <button className="text-red-500 hover:underline ml-2">
+                <button
+                  onClick={() => handleDelete(availability.id)}
+                  className="text-red-500 hover:underline ml-2"
+                >
                   Delete
                 </button>
               </td>
