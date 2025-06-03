@@ -17,26 +17,26 @@ import { Availability } from "../pages/Availability";
 import AddAvailability from "../pages/AddAvailability";
 
 export const router = createBrowserRouter([
-  
   {
     element: <PublicRoutes />, // Wrap protected routes here
     children: [
-  {
-    path: "/sign-in",
-    element: <RoleSelection />, // Default route to RoleSelection
+      {
+        path: "/sign-in",
+        element: <RoleSelection />, // Default route to RoleSelection
+      },
+      {
+        path: "/admin-signin",
+        element: <AdminSignIn />,
+      },
+      {
+        path: "/admin-signup",
+        element: <AdminSignUp />,
+      },
+    ],
   },
-  {
-    path: "/admin-signin",
-    element: <AdminSignIn />,
-  },
-  {
-    path: "/admin-signup",
-    element: <AdminSignUp />,
-  },
-]},
   {
     element: <ProtectedRoutes />, // Wrap protected routes here
-    children: [      
+    children: [
       {
         element: <Sidebar />,
         children: [
@@ -44,14 +44,18 @@ export const router = createBrowserRouter([
             path: "/dashboard",
             element: <Dashboard />,
             children: [
-              { path: "", element: <Navigate to="create-organization" replace /> }, // Redirect to /dashboard/create-organization
+              {
+                path: "",
+                element: <Navigate to="create-organization" replace />,
+              }, // Redirect to /dashboard/create-organization
               {
                 path: "create-organization",
                 element: (
                   <RoleProtectedRoute allowedRoles={["Admin"]}>
                     <CreateOrganization />
                   </RoleProtectedRoute>
-                ),              },
+                ),
+              },
               {
                 path: "requests",
                 element: <PendingRequests />,
@@ -65,23 +69,23 @@ export const router = createBrowserRouter([
           {
             path: "/organizations/:id",
             element: <OrganizationDetails />,
-          },          
+          },
           {
             path: "/schedules",
             element: <Schedules />,
-          },          
+          },
           {
             path: "/availability",
             element: <Availability />,
-          },          
+          },
           {
             path: "/add-availability",
             element: <AddAvailability />,
-          },          
+          },
           {
             path: "/availability/edit/:id",
             element: <AddAvailability />,
-          }
+          },
         ],
       },
     ],

@@ -218,10 +218,10 @@ export const addAvailability = async (req: Request, res: Response) => {
           }) => ({
             day: slot.day,
             allDay: slot.allDay,
-            available: slot.available,
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-                      })),
+            available: slot.allDay ? true : slot.available,
+            startTime: slot.allDay ? "00:00" : slot.startTime,
+            endTime: slot.allDay ? "23:59" : slot.endTime,
+          })),
         },
       },
       include: {
@@ -267,4 +267,45 @@ export const getAvailabilityByOrganization = async (req: Request, res: Response)
   }
 };
 
+export const assignScheduledShift = async (req: Request, res: Response) => {
+  const { employeeId, date, startTime, endTime } = req.body;
 
+  try {
+    // Create a new scheduled shift in the database
+    const scheduledShift = await prisma.scheduledShift.create({
+      data: {
+        employeeId,
+        date: new Date(date), // Ensure the date is in the correct format
+        startTime,
+        endTime,
+      },
+    });
+
+    res.status(201).json(scheduledShift);
+  } catch (error) {
+    console.error("Error assigning scheduled shift:", error);
+    res.status(500).json({ error: "Failed to assign scheduled shift" });
+  }
+};
+
+export const getScheduledShiftsByOrganization = async (req: Request, res: Response) => {
+  const { organizationId } = req.query;
+
+  try {
+    const shifts = await prisma.scheduledShift.findMany({
+      where: {
+        employee: {
+          organizationId: organizationId as string,
+        },
+      },
+      include: {
+        employee: true,
+      },
+    });
+
+    res.status(200).json(shifts);
+  } catch (error) {
+    console.error("Error fetching scheduled shifts:", error);
+    res.status(500).json({ error: "Failed to fetch scheduled shifts" });
+  }
+};
