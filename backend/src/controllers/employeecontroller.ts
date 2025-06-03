@@ -288,7 +288,14 @@ export const deleteAvailability = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    await prisma.availability.delete({ where: { id } });
+    // Delete all DailyAvailabilitySlot records for this availability
+    await prisma.dailyAvailabilitySlot.deleteMany({
+      where: { availabilityId: id },
+    });
+    // Now delete the availability record itself
+    await prisma.availability.delete({
+      where: { id },
+    });
     res.status(200).json({ message: "Availability deleted successfully" });
   } catch (error) {
     console.error("Error deleting availability:", error);
@@ -335,8 +342,6 @@ export const assignScheduledShift = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to assign scheduled shift" });
   }
 };
-
-// Add this to employeecontroller.ts
 
 export const getScheduledShiftsByOrganization = async (req: Request, res: Response) => {
   const { organizationId } = req.query;

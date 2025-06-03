@@ -102,6 +102,8 @@ export default function AddAvailability() {
             fetchOrganizations();
           } else if (data.position === "Manager") {
             await fetchEmployeesByOrganization(data.organizationId);
+            // For Manager, set the selected organization to the manager's own organization
+            setSelectedOrganization(data.organizationId);
           } else {
             setSelectedEmployee(data.id);
           }
