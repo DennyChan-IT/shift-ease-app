@@ -16,6 +16,7 @@ import {
   rejectRequest,
   updateAvailability,
   updateEmployee,
+  updateScheduledShift,
 } from "../controllers/employeecontroller";
 
 export const router = Router();
@@ -40,3 +41,4 @@ router.get("/availabilities-by-organization", getAvailabilityByOrganization);
 
 router.get("/scheduled-shifts", getScheduledShiftsByOrganization);
 router.post("/scheduled-shifts", assignScheduledShift);
+router.put("/scheduled-shifts/:id", updateScheduledShift);

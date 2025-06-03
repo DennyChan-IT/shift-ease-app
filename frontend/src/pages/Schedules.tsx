@@ -31,7 +31,7 @@ type Availability = {
   };
 };
 
-type ScheduledShift = {
+export type ScheduledShift = {
   id: string;
   employeeId: string;
   date: string;
@@ -151,12 +151,20 @@ export function AvailabilityModal({
   if (!isOpen || !employee || !date) return null;
 
   return (
-    <dialog open className="rounded-lg p-6 bg-white shadow-lg">
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+    {/* Overlay */}
+    <div 
+      className="absolute inset-0 bg-black opacity-50" 
+      onClick={onClose} 
+    />
+    {/* Modal Content */}
+    <div className="relative bg-white rounded-lg p-6 shadow-lg">
       <h2 className="text-xl font-semibold mb-4">
         Assign Hours for {employee.name} on {format(date, "MMM dd, yyyy")}
       </h2>
       <p className="mb-4">
-        Available from <strong>{convertTo12Hour(defaultStart)}</strong> to{" "}
+        Available from
+        <strong>{convertTo12Hour(defaultStart)}</strong> to
         <strong>
           {defaultEndOriginal === "24:00"
             ? "12:00 AM"
@@ -164,6 +172,7 @@ export function AvailabilityModal({
         </strong>
       </p>
       <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+        {/* form inputs */}
         <div>
           <label className="block font-medium">Start Time</label>
           <input
@@ -190,9 +199,7 @@ export function AvailabilityModal({
               }
             }}
             min={customStart}
-            max={
-              defaultEndOriginal === "24:00" ? defaultEndForInput : defaultEndOriginal
-            }
+            max={defaultEndOriginal === "24:00" ? defaultEndForInput : defaultEndOriginal}
             required
             className="border p-2 rounded"
           />
@@ -213,9 +220,104 @@ export function AvailabilityModal({
           </button>
         </div>
       </form>
-    </dialog>
-  );
+    </div>
+  </div>
+);
+}
+
+// New modal component for editing an already assigned shift.
+type EditShiftModalProps = {
+  isOpen: boolean;
+  shift: ScheduledShift | null;
+  onClose: () => void;
+  onUpdate: (updatedShift: { id: string; startTime: string; endTime: string }) => void;
 };
+
+function EditShiftModal({ isOpen, shift, onClose, onUpdate }: EditShiftModalProps) {
+  const [startTime, setStartTime] = useState(shift ? shift.startTime : "");
+  const [endTime, setEndTime] = useState(shift ? shift.endTime : "");
+
+  useEffect(() => {
+    if (shift) {
+      setStartTime(shift.startTime);
+      setEndTime(shift.endTime);
+    }
+  }, [shift]);
+
+  if (!isOpen || !shift) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onUpdate({ id: shift.id, startTime, endTime });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+    {/* Backdrop */}
+    <div 
+      className="absolute inset-0 bg-black opacity-50" 
+      onClick={onClose} 
+    />
+    {/* Modal Container */}
+    <div className="relative bg-white rounded-lg p-6 shadow-lg">
+      <h2 className="text-xl font-semibold mb-4">
+        Edit Shift for {shift.employee.name} on {format(new Date(shift.date), "MMM dd, yyyy")}
+      </h2>
+      <p className="mb-4">
+        Available from <strong>{shift.startTime}</strong> to
+        <strong>{shift.endTime === "24:00" ? "12:00 AM" : shift.endTime}</strong>
+      </p>
+      <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+        <div>
+          <label className="block font-medium">Start Time</label>
+          <input
+            type="time"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+            required
+            className="border p-2 rounded"
+          />
+        </div>
+        <div>
+          <label className="block font-medium">End Time</label>
+          <input
+            type="time"
+            value={endTime === "24:00" ? "00:00" : endTime}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (shift.endTime === "24:00" && val === "00:00") {
+                setEndTime("24:00");
+              } else {
+                setEndTime(val);
+              }
+            }}
+            min={startTime}
+            required
+            className="border p-2 rounded"
+          />
+        </div>
+        <div className="flex justify-end space-x-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Save Shift
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+);
+
+}
 
 const Schedules = () => {
   const [currentWeek, setCurrentWeek] = useState<ScheduleDay[] | null>(null);
@@ -236,6 +338,10 @@ const Schedules = () => {
   const [modalDate, setModalDate] = useState<Date | null>(null);
   const [modalEmployee, setModalEmployee] = useState<EmployeeType | null>(null);
   const [modalSlots, setModalSlots] = useState<DailyAvailabilitySlot[]>([]);
+
+  // New state for editing shifts
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [shiftToEdit, setShiftToEdit] = useState<ScheduledShift | null>(null);
 
   // New state to hold user role and organization for access control
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -428,6 +534,8 @@ const Schedules = () => {
       );
       if (response.ok) {
         console.log("Shift assigned successfully with custom times!");
+        // Refresh scheduled shifts after assignment
+        await fetchScheduledShifts(selectedOrganization);
       } else {
         console.error("Failed to assign shift:", await response.text());
       }
@@ -436,12 +544,50 @@ const Schedules = () => {
     }
   };
 
+  // Handler to open the edit modal for an assigned shift.
+  const handleOpenEditModal = (shift: ScheduledShift) => {
+    setShiftToEdit(shift);
+    setIsEditModalOpen(true);
+  };
+
+  // Handler to update an existing shift.
+  const handleUpdateShift = async (updatedShift: { id: string; startTime: string; endTime: string }) => {
+    const token = await getToken();
+    // Adjust the endTime: if it's "00:00", change it to "24:00"
+    const adjustedEndTime = updatedShift.endTime === "00:00" ? "24:00" : updatedShift.endTime;
+  
+    try {
+      const response = await fetch(`http://localhost:8080/api/employees/scheduled-shifts/${updatedShift.id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          startTime: updatedShift.startTime,
+          endTime: adjustedEndTime,
+        }),
+      });
+      if (response.ok) {
+        setScheduledShifts((prev) =>
+          prev.map((shift) =>
+            shift.id === updatedShift.id ? { ...shift, startTime: updatedShift.startTime, endTime: adjustedEndTime } : shift
+          )
+        );
+      } else {
+        console.error("Failed to update shift:", await response.text());
+      }
+    } catch (error) {
+      console.error("Error updating shift:", error);
+    }
+  };
+  
+
   if (!currentWeek) {
     return <div>Loading...</div>;
   }
 
   // Compute the list of employees to display.
-  // They are either employees that already have a scheduled shift OR have been manually added.
   const employeesWithShift = employeesForOrg.filter((employee) =>
     scheduledShifts.some((shift) => shift.employeeId === employee.id)
   );
@@ -487,7 +633,7 @@ const Schedules = () => {
         </button>
         {currentWeek && (
           <div className="flex bg-white items-center font-semibold border border-gray-200 px-4 py-1">
-            {format(currentWeek[0].date, "MMM dd, yyyy")} -{" "}
+            {format(currentWeek[0].date, "MMM dd, yyyy")} -
             {format(currentWeek[6].date, "MMM dd, yyyy")}
           </div>
         )}
@@ -537,7 +683,7 @@ const Schedules = () => {
                   {currentWeek.map((day) => (
                     <th
                       key={day.date.toISOString()}
-                      className={`w-[10vw] p-4 bg-white border border-gray-300`}
+                      className="w-[10vw] p-4 bg-white border border-gray-300"
                     >
                       <div
                         className={`flex justify-between ${
@@ -567,7 +713,6 @@ const Schedules = () => {
                 </tr>
               </thead>
               <tbody>
-                {/* Render rows for employees in displayEmployees */}
                 {displayEmployees.map((employee) => (
                   <tr key={employee.id}>
                     <td className="bg-white border border-gray-300 px-4 py-2 font-bold text-left">
@@ -580,12 +725,13 @@ const Schedules = () => {
                       );
                       if (assignedShift) {
                         return (
-                          <td
-                            key={day.date.toISOString()}
-                            className="bg-white border border-gray-300 px-4 py-2"
-                          >
-                            {assignedShift.startTime} - {assignedShift.endTime}
-                          </td>
+<td
+  key={day.date.toISOString()}
+  className="bg-white border border-gray-300 px-4 py-2 cursor-pointer hover:bg-gray-100"
+  onClick={() => handleOpenEditModal(assignedShift)}
+>
+    {assignedShift.startTime} - {assignedShift.endTime}
+</td>
                         );
                       } else {
                         const employeeAvailabilities =
@@ -678,6 +824,13 @@ const Schedules = () => {
           available: slot.available,
         }))}
         onAssign={handleAssign}
+      />
+
+      <EditShiftModal
+        isOpen={isEditModalOpen}
+        shift={shiftToEdit}
+        onClose={() => setIsEditModalOpen(false)}
+        onUpdate={handleUpdateShift}
       />
     </div>
   );
