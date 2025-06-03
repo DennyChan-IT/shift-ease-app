@@ -12,67 +12,84 @@ export default function AdminSignUp() {
   const { isLoaded, signUp, setActive } = useSignUp();
   const navigate = useNavigate();
 
-  // Handle sign-up form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!isLoaded) return;
 
     try {
-      // Initiate sign-up with email and password
       await signUp.create({
         emailAddress,
         password,
       });
 
-      // Send verification code to the user's email
       await signUp.prepareEmailAddressVerification({
         strategy: "email_code",
       });
 
-      // Move to verification step
       setVerifying(true);
     } catch {
-      setError("Sign-up failed. Please check your details and try again.");
+      setError("Sign-up failed. Please try again.");
     }
   };
 
-  // Handle verification code submission
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!isLoaded) return;
 
     try {
-      // Attempt verification using the provided code
       const signUpAttempt = await signUp.attemptEmailAddressVerification({
         code,
       });
 
       if (signUpAttempt.status === "complete") {
-        // Activate session and redirect if verification is successful
+        // Activate the session
         await setActive({ session: signUpAttempt.createdSessionId });
-        navigate("/home"); // Redirect to the dashboard or home page
+
+        // Add admin to the database
+        const token = signUpAttempt.createdSessionId; // Use the session token for authentication
+        try {
+          const response = await fetch("http://localhost:8080/api/admin", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: "Admin User", // Add a default name or collect it during sign-up
+              email: emailAddress,
+              position: "Admin", // Specify the admin position
+              organizationId: null,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to add admin to the database");
+          }
+        } catch (error) {
+          console.error("Error adding admin to the database:", error);
+        }
+
+        // Redirect to the dashboard or home page
+        navigate("/dashboard");
       } else {
-        setError("Verification incomplete. Please check your code.");
+        setError("Verification failed. Please check your code and try again.");
       }
     } catch {
-      setError("Invalid code. Please try again.");
+      setError("Invalid verification code.");
     }
   };
 
-  // Render verification form if in verification step
   if (verifying) {
     return (
       <div className="flex items-center justify-center h-screen bg-slate-100">
         <div className="text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-teal-500">
           <img src={logo} alt="App Logo" className="w-24 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-teal-500 mb-4 mb-4">
-            Verify Email
-          </h2>
+          <h2 className="text-2xl font-bold mb-4">Verify Email</h2>
           {error && <p className="text-red-500">{error}</p>}
           <form onSubmit={handleVerify}>
-            <label htmlFor="code">Enter your verification code</label>
+            <label htmlFor="code">Enter Verification Code</label>
             <input
               id="code"
               name="code"
@@ -93,28 +110,25 @@ export default function AdminSignUp() {
     );
   }
 
-  // Render initial sign-up form
   return (
     <div className="flex items-center justify-center h-screen bg-blue-100">
       <div className="text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-teal-500">
         <img src={logo} alt="App Logo" className="w-24 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-teal-500 mb-4">Admin Sign-Up</h2>
+        <h2 className="text-2xl font-bold text-blue-500 mb-4">Admin Sign-Up</h2>
         {error && <p className="text-red-500">{error}</p>}
         <form onSubmit={handleSubmit}>
-          <label htmlFor="email">Enter email address</label>
+          <label htmlFor="email">Enter Email Address</label>
           <input
             id="email"
             type="email"
-            name="email"
             className="w-full px-3 py-2 mb-4 border border-blue-500 rounded"
             value={emailAddress}
             onChange={(e) => setEmailAddress(e.target.value)}
           />
-          <label htmlFor="password">Enter password</label>
+          <label htmlFor="password">Enter Password</label>
           <input
             id="password"
             type="password"
-            name="password"
             className="w-full px-3 py-2 mb-4 border border-blue-500 rounded"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
