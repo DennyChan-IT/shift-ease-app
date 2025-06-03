@@ -1,23 +1,54 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@clerk/clerk-react";
+import { useOrganizations } from "../contexts/organization-context";
+import { useEmployees } from "../contexts/employee-context";
 import { LuBuilding } from "react-icons/lu";
 import { Link } from "react-router-dom";
 import { FiTrash2 } from "react-icons/fi";
-import { useOrganizations } from "../contexts/organization-context";
-import { useEffect } from "react";
-import { useEmployees } from "../contexts/employee-context";
 
 export default function Organizations() {
   const { organizations, remove } = useOrganizations();
   const { employees, fetchEmployees } = useEmployees();
+  const { getToken } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchEmployees();
+
+    const checkUserRole = async () => {
+      const token = await getToken();
+      try {
+        const response = await fetch("http://localhost:8080/api/user-info", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+
+          if (data.position === "Manager") {
+            // Redirect managers directly to their organization details page
+            navigate(`/organizations/${data.organizationId}`);
+          }
+        } else {
+          console.error("Failed to fetch user info.");
+        }
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+      }
+    };
+
+    checkUserRole();
   }, []);
-  
+
+  // If no organizations exist
   if (organizations.length === 0) {
     return (
       <div className="w-full flex flex-col items-center justify-center h-screen bg-gray-100">
         <LuBuilding className="text-gray-500 text-6xl mx-auto mb-4" />
-
         <h2 className="text-xl font-semibold text-gray-800 mb-2">
           No Organizations Yet
         </h2>
@@ -34,6 +65,7 @@ export default function Organizations() {
     );
   }
 
+  // If the user is an admin, show the list of all organizations
   return (
     <div className="w-full p-6 bg-gray-100">
       <h2 className="text-2xl font-bold mb-4">Organizations Overview</h2>
@@ -44,9 +76,7 @@ export default function Organizations() {
             className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition relative"
           >
             <div className="flex justify-between mb-2">
-              <h3 className="text-lg font-semibold text-gray-800">
-                {org.name}
-              </h3>
+              <h3 className="text-lg font-semibold text-gray-800">{org.name}</h3>
               <button
                 onClick={() => remove(org.id)}
                 className="text-center text-red-500 hover:text-red-700 transition"
@@ -57,7 +87,7 @@ export default function Organizations() {
             <p className="text-gray-600 mb-4">
               📍 {org.location || "Location not specified"}
             </p>
-            <p className="text-gray-600 mb-4">{employees.length} employees</p>{" "}
+            <p className="text-gray-600 mb-4">{employees.length} employees</p>
             <button>
               <Link
                 to={`/organizations/${org.id}`}

@@ -4,9 +4,9 @@ import { useOrganizations } from "../contexts/organization-context";
 
 export function CreateOrganization() {
   const [name, setName] = useState("");
-  const { fetchOrganizations } = useOrganizations();
   const [location, setLocation] = useState("");
   const [message, setMessage] = useState("");
+  const { fetchOrganizations} = useOrganizations();
   const { getToken } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
