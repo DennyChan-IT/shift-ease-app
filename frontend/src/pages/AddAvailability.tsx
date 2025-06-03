@@ -217,10 +217,15 @@ export default function AddAvailability() {
     e.preventDefault();
     const token = await getToken();
 
+    // Convert effectiveEndDate to a Date and add 1 day so Sunday is fully covered
+const adjustedEffectiveEnd = addDays(new Date(effectiveEndDate), 1);
+
+
+
     const payload = {
       employeeId: selectedEmployee,
       effectiveStart: new Date(effectiveStartDate).toISOString(),
-      effectiveEnd: new Date(effectiveEndDate).toISOString(),
+      effectiveEnd: adjustedEffectiveEnd.toISOString(),
       availability,
     };
 
