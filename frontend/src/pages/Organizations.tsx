@@ -76,7 +76,9 @@ export default function Organizations() {
             className="bg-white p-6 border rounded-lg shadow-md hover:shadow-lg transition relative"
           >
             <div className="flex justify-between mb-2">
-              <h3 className="text-lg font-semibold text-gray-800">{org.name}</h3>
+              <h3 className="text-lg font-semibold text-gray-800">
+                {org.name}
+              </h3>
               <button
                 onClick={() => remove(org.id)}
                 className="text-center text-red-500 hover:text-red-700 transition"
@@ -87,7 +89,9 @@ export default function Organizations() {
             <p className="text-gray-600 mb-4">
               📍 {org.location || "Location not specified"}
             </p>
-            <p className="text-gray-600 mb-4">{employees.length} employees</p>
+            <p className="text-gray-600 mb-4">
+              {employees.filter((emp) => emp.organizationId === org.id).length} employees
+            </p>
             <button>
               <Link
                 to={`/organizations/${org.id}`}

@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { EmployeeType } from "../types/Employee";
-import { format, addDays } from "date-fns";
+import { OrganizationType } from "../types/Organization";
+import { addDays } from "date-fns";
+import { DailyAvailabilitySlot } from "./Schedules";
 
 type AvailabilityDay = {
   day: string;
@@ -16,114 +18,69 @@ export default function AddAvailability() {
   const { id } = useParams(); // ID for editing
   const navigate = useNavigate();
   const { getToken } = useAuth();
+
+  // Helper: determine if editing based on id presence
+  const isEditing = Boolean(id);
+
   const [userRole, setUserRole] = useState<string | null>(null);
   const [, setUserOrganizationId] = useState<string | null>(null);
   const [, setUserId] = useState<string | null>(null);
 
+  // State for organization selection (for Admin users)
+  const [organizations, setOrganizations] = useState<OrganizationType[]>([]);
+  const [selectedOrganization, setSelectedOrganization] = useState<string>("");
+
   const [employees, setEmployees] = useState<EmployeeType[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>("");
 
-  // Helper: Format a Date as YYYY-MM-DD using local time.
-  const formatDateLocal = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const day = date.getDate().toString().padStart(2, "0");
+  // Date helpers
+
+  // Format a Date object as "yyyy-mm-dd" in UTC
+  const formatDateUTC = (date: Date): string => {
+    const year = date.getUTCFullYear();
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, "0");
+    const day = date.getUTCDate().toString().padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
-  // Helper: Given any date, return the Monday of that week.
+  // Get the Monday for the given date using UTC values
   const getMondayOfDate = (date: Date): Date => {
-    // In JavaScript, getDay(): 0=Sunday, 1=Monday, etc.
-    const day = date.getDay();
-    // For Monday, offset is 0; for Tuesday, offset is 1; for Sunday (0), offset is 6.
+    const day = date.getUTCDay(); // Using UTC day
     const offset = (day + 6) % 7;
     const monday = new Date(date);
-    monday.setDate(date.getDate() - offset);
+    monday.setUTCDate(date.getUTCDate() - offset);
     return monday;
   };
 
-  // Helper: Get current week's Monday (even if it's in the past)
+  // Get the current Monday (formatted in UTC)
   const getCurrentMonday = (): string => {
     const now = new Date();
     const monday = getMondayOfDate(now);
-    return formatDateLocal(monday);
+    return formatDateUTC(monday);
   };
 
-  // Set default dates (Current Monday → Sunday)
+  // Initial effective dates default values (using UTC)
   const [effectiveStartDate, setEffectiveStartDate] = useState<string>(
-    format(getCurrentMonday() + "T00:00", "yyyy-MM-dd")
+    formatDateUTC(getMondayOfDate(new Date()))
   );
   const [effectiveEndDate, setEffectiveEndDate] = useState<string>(
-    format(addDays(getCurrentMonday() + "T00:00", 6), "yyyy-MM-dd")
+    formatDateUTC(addDays(getMondayOfDate(new Date()), 6))
   );
 
-  // Handler for when the date input changes.
-  // It takes whatever date the user picks, computes that week's Monday and Sunday.
-  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.value;
-    // Append "T00:00" so that the date is treated in local time.
-    const selectedDate = new Date(selected + "T00:00");
-    const monday = getMondayOfDate(selectedDate);
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
+  // Default availability (for new entries)
+  const defaultAvailability: AvailabilityDay[] = [
+    { day: "Monday", allDay: true, available: false, startTime: "09:00", endTime: "23:00" },
+    { day: "Tuesday", allDay: true, available: false, startTime: "09:00", endTime: "23:00" },
+    { day: "Wednesday", allDay: true, available: false, startTime: "09:00", endTime: "23:00" },
+    { day: "Thursday", allDay: true, available: false, startTime: "09:00", endTime: "23:00" },
+    { day: "Friday", allDay: true, available: false, startTime: "09:00", endTime: "24:00" },
+    { day: "Saturday", allDay: true, available: false, startTime: "09:00", endTime: "24:00" },
+    { day: "Sunday", allDay: true, available: false, startTime: "09:00", endTime: "23:00" },
+  ];
 
-    // Update state with the Monday and Sunday of the chosen week.
-    setEffectiveStartDate(formatDateLocal(monday));
-    setEffectiveEndDate(formatDateLocal(sunday));
-  };
+  const [availability, setAvailability] = useState<AvailabilityDay[]>(defaultAvailability);
 
-  const [availability, setAvailability] = useState<AvailabilityDay[]>([
-    {
-      day: "Monday",
-      allDay: true,
-      available: false,
-      startTime: "09:00",
-      endTime: "23:00",
-    },
-    {
-      day: "Tuesday",
-      allDay: true,
-      available: false,
-      startTime: "09:00",
-      endTime: "23:00",
-    },
-    {
-      day: "Wednesday",
-      allDay: true,
-      available: false,
-      startTime: "09:00",
-      endTime: "23:00",
-    },
-    {
-      day: "Thursday",
-      allDay: true,
-      available: false,
-      startTime: "09:00",
-      endTime: "23:00",
-    },
-    {
-      day: "Friday",
-      allDay: true,
-      available: false,
-      startTime: "09:00",
-      endTime: "24:00",
-    },
-    {
-      day: "Saturday",
-      allDay: true,
-      available: false,
-      startTime: "09:00",
-      endTime: "24:00",
-    },
-    {
-      day: "Sunday",
-      allDay: true,
-      available: false,
-      startTime: "09:00",
-      endTime: "23:00",
-    },
-  ]);
-
+  // Fetch user details and set up data based on role
   useEffect(() => {
     const fetchUserDetails = async () => {
       const token = await getToken();
@@ -142,11 +99,10 @@ export default function AddAvailability() {
           setUserId(data.id);
 
           if (data.position === "Admin") {
-            await fetchAllEmployees();
+            fetchOrganizations();
           } else if (data.position === "Manager") {
             await fetchEmployeesByOrganization(data.organizationId);
           } else {
-            // For regular employees, set their own ID
             setSelectedEmployee(data.id);
           }
         } else {
@@ -157,70 +113,130 @@ export default function AddAvailability() {
       }
     };
 
-    const fetchAllEmployees = async () => {
-      const token = await getToken();
-      try {
-        const response = await fetch("http://localhost:8080/api/employees", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setEmployees(data);
-        } else {
-          console.error("Failed to fetch employees");
-        }
-      } catch (error) {
-        console.error("Error fetching employees:", error);
-      }
-    };
-
-    const fetchEmployeesByOrganization = async (organizationId: string) => {
-      const token = await getToken();
-      try {
-        const response = await fetch(
-          `http://localhost:8080/api/employees?organizationId=${organizationId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          setEmployees(data);
-        } else {
-          console.error("Failed to fetch employees");
-        }
-      } catch (error) {
-        console.error("Error fetching employees:", error);
-      }
-    };
-
     fetchUserDetails();
-  }, []);
+  }, [getToken]);
 
-  const handleDayChange = <T extends keyof AvailabilityDay>(
-    index: number,
-    field: T,
-    value: AvailabilityDay[T]
-  ) => {
-    setAvailability((prev) =>
-      prev.map((day, i) => (i === index ? { ...day, [field]: value } : day))
-    );
+  // Fetch organizations for Admin
+  const fetchOrganizations = async () => {
+    const token = await getToken();
+    try {
+      const response = await fetch("http://localhost:8080/api/organizations", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setOrganizations(data);
+      } else {
+        console.error("Failed to fetch organizations");
+      }
+    } catch (error) {
+      console.error("Error fetching organizations:", error);
+    }
   };
+
+  // Fetch employees filtered by organization ID
+  const fetchEmployeesByOrganization = async (orgId: string) => {
+    const token = await getToken();
+    try {
+      const response = await fetch(`http://localhost:8080/api/employees?organizationId=${orgId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEmployees(data);
+      } else {
+        console.error("Failed to fetch employees");
+      }
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+    }
+  };
+
+  // Handle start date change using UTC parsing and formatting
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.value;
+    // Append "T00:00:00Z" to ensure UTC parsing
+    const selectedDate = new Date(selected + "T00:00:00Z");
+    const monday = getMondayOfDate(selectedDate);
+    const sunday = new Date(monday);
+    sunday.setUTCDate(monday.getUTCDate() + 6);
+    setEffectiveStartDate(formatDateUTC(monday));
+    setEffectiveEndDate(formatDateUTC(sunday));
+  };
+
+  // Handle organization selection (for Admin)
+  const handleOrganizationChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const orgId = e.target.value;
+    setSelectedOrganization(orgId);
+    await fetchEmployeesByOrganization(orgId);
+  };
+
+  // If editing, fetch the existing availability record and populate state
+  useEffect(() => {
+    if (id) {
+      const fetchAvailability = async () => {
+        const token = await getToken();
+        try {
+          const response = await fetch(
+            `http://localhost:8080/api/employees/availabilities/${id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          if (response.ok) {
+            const data = await response.json();
+
+            // Set the effective dates (subtract one day from effectiveEnd for display)
+            setEffectiveStartDate(formatDateUTC(new Date(data.effectiveStart)));
+            setEffectiveEndDate(formatDateUTC(addDays(new Date(data.effectiveEnd), -1)));
+
+            // Pre-select organization and employee using data from the backend
+            fetchEmployeesByOrganization(data.employee.organizationId);
+            setSelectedOrganization(data.employee.organizationId);
+            setSelectedEmployee(data.employee.id);
+
+            // Map the fetched DailyAvailabilitySlot array to update availability state
+            const updatedAvailability = defaultAvailability.map((dayItem) => {
+              const slots: DailyAvailabilitySlot[] = data.DailyAvailabilitySlot || [];
+              const fetchedSlot = slots.find((slot) => slot.day === dayItem.day);
+              if (fetchedSlot) {
+                return {
+                  day: dayItem.day,
+                  allDay: fetchedSlot.allDay,
+                  available: fetchedSlot.available,
+                  startTime: fetchedSlot.startTime ?? dayItem.startTime,
+                  endTime: fetchedSlot.endTime ?? dayItem.endTime,
+                };
+              }
+              return dayItem;
+            });
+
+            setAvailability(updatedAvailability);
+          } else {
+            console.error("Failed to fetch availability details");
+          }
+        } catch (error) {
+          console.error("Error fetching availability details:", error);
+        }
+      };
+      fetchAvailability();
+    }
+  }, [id, getToken]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = await getToken();
-
-    // Convert effectiveEndDate to a Date and add 1 day so Sunday is fully covered
-const adjustedEffectiveEnd = addDays(new Date(effectiveEndDate), 1);
-
-
+    // Adjust the effective end date (if needed) and convert to ISO string
+    const adjustedEffectiveEnd = addDays(new Date(effectiveEndDate), 1);
 
     const payload = {
       employeeId: selectedEmployee,
@@ -246,11 +262,7 @@ const adjustedEffectiveEnd = addDays(new Date(effectiveEndDate), 1);
       });
 
       if (response.ok) {
-        alert(
-          id
-            ? "Availability updated successfully!"
-            : "Availability added successfully!"
-        );
+        alert(id ? "Availability updated successfully!" : "Availability added successfully!");
         navigate("/availability");
       } else {
         alert("Failed to save availability.");
@@ -260,17 +272,33 @@ const adjustedEffectiveEnd = addDays(new Date(effectiveEndDate), 1);
     }
   };
 
-  if (!userRole) {
-    return <p>Loading...</p>;
-  }
-
   return (
     <div className="flex-1 w-full p-6">
-      <h2 className="text-xl font-bold mb-4">
-        {id ? "Edit Availability" : "Add Availability"}
-      </h2>
+      <h2 className="text-xl font-bold mb-4">{id ? "Edit Availability" : "Add Availability"}</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
-        {(userRole === "Admin" || userRole === "Manager") && (
+        {userRole === "Admin" && (
+          <label className="block">
+            <span className="font-semibold">Select Organization</span>
+            <select
+              value={selectedOrganization}
+              onChange={handleOrganizationChange}
+              className="w-full p-2 border rounded"
+              required
+              disabled={isEditing}  // Disabled when editing
+            >
+              <option value="" disabled>
+                Choose an organization
+              </option>
+              {organizations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        {((userRole === "Admin" && selectedOrganization) || userRole === "Manager") && (
           <label className="block">
             <span className="font-semibold">Select Employee</span>
             <select
@@ -278,26 +306,32 @@ const adjustedEffectiveEnd = addDays(new Date(effectiveEndDate), 1);
               onChange={(e) => setSelectedEmployee(e.target.value)}
               className="w-full p-2 border rounded"
               required
+              disabled={isEditing}  // Disabled when editing
             >
               <option value="" disabled>
                 Choose an employee
               </option>
-              {employees.map((employee) => (
-                <option key={employee.id} value={employee.id}>
-                  {employee.name}
-                </option>
-              ))}
+              {employees
+                .filter(
+                  (employee) =>
+                    employee.organizationId === selectedOrganization &&
+                    employee.position !== "Admin"
+                )
+                .map((employee) => (
+                  <option key={employee.id} value={employee.id}>
+                    {employee.name}
+                  </option>
+                ))}
             </select>
           </label>
         )}
 
-        {userRole !== "Admin" && userRole !== "Manager" && (
+        {userRole && userRole !== "Admin" && userRole !== "Manager" && (
           <p>
             Adding availability for: <strong>Yourself</strong>
           </p>
         )}
 
-        {/* Effective Dates */}
         <label className="block">
           <span className="font-semibold">Effective Dates</span>
           <div className="flex space-x-2">
@@ -307,7 +341,7 @@ const adjustedEffectiveEnd = addDays(new Date(effectiveEndDate), 1);
               onChange={handleStartDateChange}
               className="p-2 border rounded w-1/2"
               required
-              min={getCurrentMonday()} // Allows dates from the current week's Monday onward.
+              min={getCurrentMonday()}
             />
             <input
               type="date"
@@ -318,49 +352,54 @@ const adjustedEffectiveEnd = addDays(new Date(effectiveEndDate), 1);
           </div>
         </label>
 
-        {/* Availability Slots */}
         <div className="p-4 border rounded-lg shadow space-y-4">
           {availability.map((day, dayIndex) => (
             <div key={day.day}>
               <span className="font-bold">{day.day}</span>
               <div className="mt-2 flex flex-col space-y-2">
-                {/* Available Checkbox */}
                 <label className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     checked={day.allDay ? true : day.available}
                     disabled={day.allDay}
                     onChange={(e) => {
-                      handleDayChange(dayIndex, "available", e.target.checked);
+                      setAvailability((prev) =>
+                        prev.map((d, i) =>
+                          i === dayIndex ? { ...d, available: e.target.checked } : d
+                        )
+                      );
                     }}
                   />
                   <span>Available</span>
                 </label>
-
-                {/* All Day Checkbox */}
                 <label className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     checked={day.allDay}
                     onChange={(e) => {
                       const isAllDay = e.target.checked;
-                      handleDayChange(dayIndex, "allDay", isAllDay);
-                      if (isAllDay) {
-                        handleDayChange(dayIndex, "available", true);
-                      }
+                      setAvailability((prev) =>
+                        prev.map((d, i) =>
+                          i === dayIndex
+                            ? { ...d, allDay: isAllDay, available: isAllDay ? true : d.available }
+                            : d
+                        )
+                      );
                     }}
                   />
                   <span>All Day</span>
                 </label>
-
-                {/* Time Inputs */}
                 {!day.allDay && day.available && (
                   <div className="flex space-x-4 items-center">
                     <input
                       type="time"
                       value={day.startTime}
                       onChange={(e) =>
-                        handleDayChange(dayIndex, "startTime", e.target.value)
+                        setAvailability((prev) =>
+                          prev.map((d, i) =>
+                            i === dayIndex ? { ...d, startTime: e.target.value } : d
+                          )
+                        )
                       }
                       className="border rounded p-2"
                     />
@@ -368,7 +407,11 @@ const adjustedEffectiveEnd = addDays(new Date(effectiveEndDate), 1);
                       type="time"
                       value={day.endTime}
                       onChange={(e) =>
-                        handleDayChange(dayIndex, "endTime", e.target.value)
+                        setAvailability((prev) =>
+                          prev.map((d, i) =>
+                            i === dayIndex ? { ...d, endTime: e.target.value } : d
+                          )
+                        )
                       }
                       className="border rounded p-2"
                     />

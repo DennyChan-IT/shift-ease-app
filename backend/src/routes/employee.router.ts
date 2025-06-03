@@ -14,6 +14,7 @@ import {
   getScheduledShiftsByOrganization,
   loggedUser,
   rejectRequest,
+  updateAvailability,
   updateEmployee,
 } from "../controllers/employeecontroller";
 
@@ -32,6 +33,7 @@ router.delete("/pending-requests/:id", rejectRequest);
 router.get("/availabilities", getAllAvailabilities);
 router.get("/availabilities/:id", getEachAvailabilities);
 router.post("/availabilities", addAvailability);
+router.put("/availabilities/:id", updateAvailability);
 router.delete("/availabilities/:id", deleteAvailability);
 
 router.get("/availabilities-by-organization", getAvailabilityByOrganization);

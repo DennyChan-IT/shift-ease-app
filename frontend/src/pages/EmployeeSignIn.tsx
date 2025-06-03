@@ -3,7 +3,7 @@ import { useSignIn } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 
-export default function ManagerSignIn() {
+export default function EmployeeSignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null); // Error state now allows string or null

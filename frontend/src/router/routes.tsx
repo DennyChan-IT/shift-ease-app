@@ -15,6 +15,7 @@ import RoleProtectedRoute from "./role-protected-router";
 import { Availability } from "../pages/Availability";
 import AddAvailability from "../pages/AddAvailability";
 import EmployeeSignUp from "../pages/EmployeeSignUp";
+import EmployeeSignIn from "../pages/EmployeeSignIn";
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +36,10 @@ export const router = createBrowserRouter([
       {
         path: "/employee-signup",
         element: <EmployeeSignUp />,
+      },
+      {
+        path: "/employee-signin",
+        element: <EmployeeSignIn />,
       },
     ],
   },
