@@ -23,7 +23,7 @@ export const validateUser = async (
 
     if (user) {
       req.userRole = dbUser?.position;
-      req.userOrganizationId = dbUser?.organizationId;
+      req.userOrganizationId = dbUser?.organizationId as string;
       return next();
     }
   }

@@ -3,7 +3,7 @@ import { useSignUp } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 
-export default function ManagerSignUp() {
+export default function EmployeeSignUp() {
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
   const [verifying, setVerifying] = useState(false);

@@ -22,17 +22,17 @@ model Organization {
 }
 
 model Employee {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  position  String
-  createdAt DateTime @default(now())
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  Availabilities Availability[]
-  organizationId String
-
-  ScheduledShift ScheduledShift[]
+  id              String     @id @default(uuid())
+  name            String
+  email           String     @unique
+  position        String
+  createdAt       DateTime   @default(now())
+  organizationId  String?    // Make this optional with `?`
+  organization    Organization? @relation(fields: [organizationId], references: [id]) // Optional relationship
+  Availabilities  Availability[]
+  ScheduledShift  ScheduledShift[]
 }
+
 
 model PendingRequest {
   id             String     @id @default(uuid())

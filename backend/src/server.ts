@@ -9,6 +9,7 @@ import { router as organizationRouter } from "./routes/organization.router";
 import cors from "cors";
 import { validateUser } from "./middleware/validate-user";
 import { router as employeeRouter } from "./routes/employee.router";
+import { router as adminRouter } from "./routes/admin.router";
 import { PrismaClient } from "@prisma/client";
 
 declare global {
@@ -30,6 +31,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+app.use("/api/admin", adminRouter);
+
 app.use(ClerkExpressWithAuth());
 
 app.use(validateUser);
