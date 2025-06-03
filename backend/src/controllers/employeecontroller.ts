@@ -343,6 +343,21 @@ export const assignScheduledShift = async (req: Request, res: Response) => {
   }
 };
 
+export const updateScheduledShift = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { startTime, endTime } = req.body;
+  try {
+    const updatedShift = await prisma.scheduledShift.update({
+      where: { id },
+      data: { startTime, endTime },
+    });
+    res.status(200).json(updatedShift);
+  } catch (error) {
+    console.error("Error updating scheduled shift:", error);
+    res.status(500).json({ error: "Failed to update scheduled shift" });
+  }
+};
+
 export const getScheduledShiftsByOrganization = async (req: Request, res: Response) => {
   const { organizationId } = req.query;
 
