@@ -30,3 +30,14 @@ model Employee {
   organization   Organization @relation(fields: [organizationId], references: [id])
   organizationId String
 }
+
+model PendingRequest {
+  id             String     @id @default(uuid())
+  name           String
+  email          String     @unique
+  position       String
+  organizationId String
+  createdAt      DateTime   @default(now())
+  status         String     @default("pending") // Status: pending, approved, rejected
+}
+

@@ -127,7 +127,7 @@ const Schedules = () => {
                 <td className="bg-white border border-gray-300 px-4 py-2 font-bold text-left">
                   <button className="bg-black text-white px-1 rounded hover:bg-gray-700 transition">
                     + Add Employee
-                  </button>{" "}
+                  </button>
                 </td>
                 {Array.from({ length: 7 }).map((_, colIndex) => (
                   <td

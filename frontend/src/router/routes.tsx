@@ -10,8 +10,15 @@ import Organizations from "../pages/Organizations";
 import OrganizationDetails from "../pages/OrganizationDetails";
 import ManagerSignUp from "../pages/ManagerSignUp";
 import Schedules from "../pages/Schedules";
+import PublicRoutes from "./public-router";
+import PendingRequests from "../components/PendingRequests";
+import RoleProtectedRoute from "./role-protected-router";
 
 export const router = createBrowserRouter([
+  
+  {
+    element: <PublicRoutes />, // Wrap protected routes here
+    children: [
   {
     path: "/sign-in",
     element: <RoleSelection />, // Default route to RoleSelection
@@ -24,9 +31,10 @@ export const router = createBrowserRouter([
     path: "/admin-signup",
     element: <AdminSignUp />,
   },
+]},
   {
     element: <ProtectedRoutes />, // Wrap protected routes here
-    children: [
+    children: [      
       {
         element: <Sidebar />,
         children: [
@@ -36,8 +44,15 @@ export const router = createBrowserRouter([
             children: [
               { path: "", element: <Navigate to="create-organization" replace /> }, // Redirect to /dashboard/create-organization
               {
-                path: "/dashboard/create-organization",
-                element: <CreateOrganization />,
+                path: "create-organization",
+                element: (
+                  <RoleProtectedRoute allowedRoles={["Admin"]}>
+                    <CreateOrganization />
+                  </RoleProtectedRoute>
+                ),              },
+              {
+                path: "requests",
+                element: <PendingRequests />,
               },
             ],
           },

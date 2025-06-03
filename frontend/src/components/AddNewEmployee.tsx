@@ -26,7 +26,7 @@ export function AddNewEmployee({ organizationId, onAdd  }: AddNewEmployeeProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = await getToken();
-
+  
     try {
       const response = await fetch("http://localhost:8080/api/employees", {
         method: "POST",
@@ -34,13 +34,41 @@ export function AddNewEmployee({ organizationId, onAdd  }: AddNewEmployeeProps) 
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email, position, organizationId }), // Include organizationId here
+        body: JSON.stringify({ name, email, position, organizationId }),
       });
-
+  
+      const result = await response.json();
+  
       if (response.ok) {
-        const newEmployee = await response.json();
-        console.log("Employee added successfully!");
-        onAdd(newEmployee); // Call the callback to update state in the parent
+        if (result.request) {
+          // Pending request logic for managers
+          alert("Your request has been submitted for admin approval. No invitation will be sent until approved.");
+        } else {
+          // Directly added employee logic for non-managers
+          console.log("Employee added successfully!");
+          onAdd(result);
+  
+          // Send invitation
+          const invitationResponse = await fetch(
+            "http://localhost:8080/api/invitations",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ emailAddress: email }),
+            }
+          );
+  
+          const invitationData = await invitationResponse.json();
+          if (invitationResponse.ok && invitationData.success) {
+            console.log(`Invitation created successfully! ID: ${invitationData.invitation.id}`);
+          } else {
+            console.error("Failed to create invitation.");
+          }
+        }
+  
         closeModal();
       } else {
         console.error("Failed to add employee");
@@ -49,6 +77,8 @@ export function AddNewEmployee({ organizationId, onAdd  }: AddNewEmployeeProps) 
       console.error("Error adding employee:", error);
     }
   };
+  
+
 
   return (
     <>
@@ -87,19 +117,13 @@ export function AddNewEmployee({ organizationId, onAdd  }: AddNewEmployeeProps) 
           </div>
           <div>
             <label className="block mb-1 font-medium">Position</label>
-            <select
+            <input
+              type="position"
               value={position}
               onChange={(e) => setPosition(e.target.value)}
               className="w-full p-2 border rounded"
               required
-            >
-              <option value="" disabled>
-                Select a position
-              </option>
-              <option value="Manager">Manager</option>
-              <option value="Developer">Developer</option>
-              <option value="Designer">Designer</option>
-            </select>
+            />
           </div>
           <div className="flex justify-end space-x-4">
             <button
