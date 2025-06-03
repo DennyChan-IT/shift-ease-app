@@ -1,10 +1,15 @@
 import { Router } from "express";
 import {
+  addAvailability,
   addEmployee,
   approveRequest,
+  deleteAvailability,
   deleteEmployee,
+  getAllAvailabilities,
   getAllEmployees,
   getAllPendingRequest,
+  getAvailabilityByOrganization,
+  getEachAvailabilities,
   loggedUser,
   rejectRequest,
   updateEmployee,
@@ -21,3 +26,10 @@ router.delete("/:id", deleteEmployee);
 router.get("/pending-requests", getAllPendingRequest);
 router.post("/pending-requests/:id", approveRequest);
 router.delete("/pending-requests/:id", rejectRequest);
+
+router.get("/availabilities", getAllAvailabilities);
+router.get("/availabilities/:id", getEachAvailabilities);
+router.post("/availabilities", addAvailability);
+router.delete("/availabilities/:id", deleteAvailability);
+
+router.get("/availabilities-by-organization", getAvailabilityByOrganization);

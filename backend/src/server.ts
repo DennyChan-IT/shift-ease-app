@@ -128,6 +128,18 @@ app.get("/api/user-info", async (req, res) => {
   }
 });
 
+app.delete("/api/employees/availabilities/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await prisma.availability.delete({ where: { id } });
+    res.status(200).json({ message: "Availability deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting availability:", error);
+    res.status(500).json({ error: "Failed to delete availability" });
+  }
+});
+
 app.listen(8080, () => {
   console.log("[server]: Listening at http://localhost:8080");
 });
