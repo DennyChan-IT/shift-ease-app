@@ -47,7 +47,7 @@ export function EditEmployee({
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ name, email, position }),
+          body: JSON.stringify({ id: employee.id, name, email, position }),
         }
       );
 

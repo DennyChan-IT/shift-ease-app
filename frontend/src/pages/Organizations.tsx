@@ -2,10 +2,17 @@ import { LuBuilding } from "react-icons/lu";
 import { Link } from "react-router-dom";
 import { FiTrash2 } from "react-icons/fi";
 import { useOrganizations } from "../contexts/organization-context";
+import { useEffect } from "react";
+import { useEmployees } from "../contexts/employee-context";
 
 export default function Organizations() {
   const { organizations, remove } = useOrganizations();
+  const { employees, fetchEmployees } = useEmployees();
 
+  useEffect(() => {
+    fetchEmployees();
+  }, []);
+  
   if (organizations.length === 0) {
     return (
       <div className="w-full flex flex-col items-center justify-center h-screen bg-gray-100">
@@ -50,7 +57,7 @@ export default function Organizations() {
             <p className="text-gray-600 mb-4">
               📍 {org.location || "Location not specified"}
             </p>
-            <p className="text-gray-600 mb-4">2 employees</p>{" "}
+            <p className="text-gray-600 mb-4">{employees.length} employees</p>{" "}
             <button>
               <Link
                 to={`/organizations/${org.id}`}

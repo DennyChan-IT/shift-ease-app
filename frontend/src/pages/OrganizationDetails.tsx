@@ -6,10 +6,12 @@ import { AddNewEmployee } from "../components/AddNewEmployee";
 import { EditEmployee } from "../components/EditEmployee";
 import { EmployeeType } from "../types/Employee";
 import { FiTrash } from "react-icons/fi";
+import { useEmployees } from "../contexts/employee-context";
 
 export default function OrganizationDetails() {
   const { id } = useParams();
   const [organization, setOrganization] = useState<OrganizationType>();
+  const { fetchEmployees } = useEmployees();
   const { getToken } = useAuth();
 
   const fetchOrganizationDetails = async () => {
@@ -80,6 +82,7 @@ export default function OrganizationDetails() {
           );
           return { ...prev, employees: updatedEmployees };
         });
+        fetchEmployees();
       } else {
         console.error("Failed to delete employee");
       }
