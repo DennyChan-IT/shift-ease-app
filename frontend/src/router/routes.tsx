@@ -7,6 +7,7 @@ import { Sidebar } from "../layouts/sidebar";
 import { Dashboard } from "../pages/Dashboard";
 import { CreateOrganization } from "../components/CreateOrganization";
 import Organizations from "../pages/Organizations";
+import OrganizationDetails from "../pages/OrganizationDetails";
 
 export const router = createBrowserRouter([
   {
@@ -42,6 +43,10 @@ export const router = createBrowserRouter([
             path: "/organizations",
             element: <Organizations />,
           },
+          {
+            path: "/organizations/:id",
+            element: <OrganizationDetails />,
+          },          
         ],
       },
     ],

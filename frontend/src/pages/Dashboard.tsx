@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useOrganizations } from "../contexts/organization-context";
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState("Create Organization");
-  const { organizations } = useOrganizations();
+  const { organizations,fetchOrganizations } = useOrganizations();
+
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
 
   const handleClick = (tab: string) => {
     setActiveTab(tab);

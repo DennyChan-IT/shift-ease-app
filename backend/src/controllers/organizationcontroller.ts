@@ -9,6 +9,20 @@ export const getAllOrganizations = async (req: Request, res: Response) => {
   res.json(organizations);
 };
 
+export const getOrganizationDetails = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const organizationDetails = await prisma.organization.findUnique({
+      where: { id },
+      include: { employees: true },
+    });
+    res.json(organizationDetails);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch organization details" });
+  }
+};
+
 export const createOrganization = async (req: Request, res: Response) => {
   const { name, location } = req.body;
   const newOrganization = await prisma.organization.create({

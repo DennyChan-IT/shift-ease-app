@@ -51,8 +51,13 @@ export default function Organizations() {
               📍 {org.location || "Location not specified"}
             </p>
             <p className="text-gray-600 mb-4">2 employees</p>{" "}
-            <button className="bg-black text-white py-1 px-3 rounded hover:bg-gray-700 transition">
-              View Details
+            <button>
+              <Link
+                to={`/organizations/${org.id}`}
+                className="bg-black text-white py-1 px-3 rounded hover:bg-gray-700 transition"
+              >
+                View Details
+              </Link>
             </button>
           </div>
         ))}
