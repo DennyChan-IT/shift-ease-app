@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useOrganizations } from "../contexts/organization-context";
+import { useEmployees } from "../contexts/employee-context";
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState("Create Organization");
-  const { organizations,fetchOrganizations } = useOrganizations();
+  const { organizations, fetchOrganizations } = useOrganizations();
+  const { employees, fetchEmployees } = useEmployees();
 
   useEffect(() => {
+    fetchEmployees();
     fetchOrganizations();
   }, []);
 
@@ -23,7 +26,7 @@ export function Dashboard() {
         </div>
         <div className="bg-white shadow-md rounded-lg p-4 text-center w-1/3">
           <p className="text-gray-600">Total Employees</p>
-          <h3 className="text-2xl font-bold">24</h3>
+          <h3 className="text-2xl font-bold">{employees.length}</h3>
         </div>
         <div className="bg-white shadow-md rounded-lg p-4 text-center w-1/3">
           <p className="text-gray-600">Pending Requests</p>

@@ -47,11 +47,10 @@ export function OrganizationContextProvider({ children }: Props) {
       console.error("Error fetching organizations:", error);
     }
   };
-  
+
   useEffect(() => {
     fetchOrganizations();
   }, []);
-
 
   const remove = async (id: OrganizationType["id"]) => {
     const token = await getToken();

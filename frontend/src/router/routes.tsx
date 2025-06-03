@@ -8,6 +8,8 @@ import { Dashboard } from "../pages/Dashboard";
 import { CreateOrganization } from "../components/CreateOrganization";
 import Organizations from "../pages/Organizations";
 import OrganizationDetails from "../pages/OrganizationDetails";
+import ManagerSignUp from "../pages/ManagerSignUp";
+import Schedules from "../pages/Schedules";
 
 export const router = createBrowserRouter([
   {
@@ -46,6 +48,10 @@ export const router = createBrowserRouter([
           {
             path: "/organizations/:id",
             element: <OrganizationDetails />,
+          },          
+          {
+            path: "/schedules",
+            element: <Schedules />,
           },          
         ],
       },
