@@ -176,13 +176,16 @@ export const getAllAvailabilities = async (req: Request, res: Response) => {
 };
 
 
-export const getEachAvailabilities = async (req: Request, res: Response) => {
+export const getEachAvailabilities = async (req: Request, res: Response) => { 
   const { id } = req.params; // Extract ID from request parameters
 
   try {
     const availability = await prisma.availability.findUnique({
       where: { id },
-      include: { employee: true }, // Include employee details if needed
+      include: { 
+        employee: true, // Include employee details if needed
+        DailyAvailabilitySlot: true, // Include daily availability slots
+      },
     });
 
     if (!availability) {
@@ -232,6 +235,51 @@ export const addAvailability = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error adding availability:", error);
     res.status(500).json({ error: "Failed to add availability" });
+  }
+};
+
+export const updateAvailability = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { employeeId, effectiveStart, effectiveEnd, availability } = req.body;
+
+  try {
+    // Delete existing DailyAvailabilitySlot records associated with the availability record.
+    await prisma.dailyAvailabilitySlot.deleteMany({
+      where: { availabilityId: id },
+    });
+
+    // Update the availability record and re-create the DailyAvailabilitySlot records.
+    const updatedAvailability = await prisma.availability.update({
+      where: { id },
+      data: {
+        employeeId,
+        effectiveStart: new Date(effectiveStart),
+        effectiveEnd: new Date(effectiveEnd),
+        DailyAvailabilitySlot: {
+          create: availability.map((slot: {
+            day: string;
+            allDay: boolean;
+            available: boolean;
+            startTime: string;
+            endTime: string;
+          }) => ({
+            day: slot.day,
+            allDay: slot.allDay,
+            available: slot.allDay ? true : slot.available,
+            startTime: slot.allDay ? "09:00" : slot.startTime,
+            endTime: slot.allDay ? "24:00" : slot.endTime,
+          })),
+        },
+      },
+      include: {
+        DailyAvailabilitySlot: true,
+      },
+    });
+
+    res.status(200).json(updatedAvailability);
+  } catch (error) {
+    console.error("Error updating availability:", error);
+    res.status(500).json({ error: "Failed to update availability" });
   }
 };
 
@@ -287,6 +335,8 @@ export const assignScheduledShift = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to assign scheduled shift" });
   }
 };
+
+// Add this to employeecontroller.ts
 
 export const getScheduledShiftsByOrganization = async (req: Request, res: Response) => {
   const { organizationId } = req.query;
