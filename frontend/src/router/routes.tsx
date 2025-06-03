@@ -41,6 +41,8 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoutes />, // Wrap protected routes here
     children: [
+      { path: "/", element: <Navigate to="dashboard" /> },
+
       {
         element: <Sidebar />,
         children: [

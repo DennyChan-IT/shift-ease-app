@@ -82,7 +82,8 @@ function AvailabilityModal({
     return (
       <dialog open className="rounded-lg p-6 bg-white shadow-lg">
         <h2 className="text-xl font-semibold mb-4">
-          No valid slots available for {employee.name} on {format(date, "MMM dd, yyyy")}.
+          No valid slots available for {employee.name} on
+          {format(date, "MMM dd, yyyy")}.
         </h2>
         <button
           onClick={onClose}
@@ -127,12 +128,16 @@ function AvailabilityModal({
 const Schedules = () => {
   const [currentWeek, setCurrentWeek] = useState<ScheduleDay[] | null>(null);
   const [selectedOrganization, setSelectedOrganization] = useState<string>("");
-  const [availableEmployees, setAvailableEmployees] = useState<EmployeeType[]>([]);
+  const [availableEmployees, setAvailableEmployees] = useState<EmployeeType[]>(
+    []
+  );
   const [addedEmployees, setAddedEmployees] = useState<EmployeeType[]>([]);
   const { organizations } = useOrganizations();
   const { getToken } = useAuth();
 
-  const [availabilitiesByEmployee, setAvailabilitiesByEmployee] = useState<{ [employeeId: string]: Availability[] }>({});
+  const [availabilitiesByEmployee, setAvailabilitiesByEmployee] = useState<{
+    [employeeId: string]: Availability[];
+  }>({});
   const [scheduledShifts, setScheduledShifts] = useState<ScheduledShift[]>([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -154,34 +159,34 @@ const Schedules = () => {
 
   const fetchAvailabilities = async (orgId: string) => {
     const token = await getToken();
-    const response = await fetch("http://localhost:8080/api/employees/availabilities", {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await fetch(
+      "http://localhost:8080/api/employees/availabilities",
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     if (!response.ok) {
       console.error("Failed to fetch availabilities");
       return;
     }
 
     const data: Availability[] = await response.json();
-    const filteredData = data.filter((av) => av.employee.organizationId === orgId);
+    const filteredData = data.filter(
+      (av) => av.employee.organizationId === orgId
+    );
 
-    const uniqueEmployees: EmployeeType[] = [];
-    const seenEmployeeIds = new Set<string>();
-    for (const item of filteredData) {
-      if (!seenEmployeeIds.has(item.employee.id)) {
-        seenEmployeeIds.add(item.employee.id);
-        uniqueEmployees.push({
-          id: item.employee.id,
-          name: item.employee.name,
-          organizationId: item.employee.organizationId,
-        });
-      }
-    }
+    // **Only include employees that have availability records**
+    const employeesWithAvailability = filteredData.map((av) => ({
+      id: av.employee.id,
+      name: av.employee.name,
+      organizationId: av.employee.organizationId,
+    }));
 
-    setAvailableEmployees(uniqueEmployees);
+    // **Update state with only employees who have submitted availability**
+    setAvailableEmployees(employeesWithAvailability);
 
     const grouped: { [employeeId: string]: Availability[] } = {};
     for (const avail of filteredData) {
@@ -195,12 +200,15 @@ const Schedules = () => {
 
   const fetchScheduledShifts = async (orgId: string) => {
     const token = await getToken();
-    const response = await fetch(`http://localhost:8080/api/employees/scheduled-shifts?organizationId=${orgId}`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await fetch(
+      `http://localhost:8080/api/employees/scheduled-shifts?organizationId=${orgId}`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     if (response.ok) {
       const data: ScheduledShift[] = await response.json();
       setScheduledShifts(data);
@@ -209,7 +217,9 @@ const Schedules = () => {
     }
   };
 
-  const handleOrganizationChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleOrganizationChange = async (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     const orgId = event.target.value;
     setSelectedOrganization(orgId);
     if (orgId) {
@@ -223,7 +233,9 @@ const Schedules = () => {
       if (prev.some((e) => e.id === employee.id)) return prev;
       return [...prev, employee];
     });
-    setAvailableEmployees((prev) => prev.filter((emp) => emp.id !== employee.id));
+    setAvailableEmployees((prev) =>
+      prev.filter((emp) => emp.id !== employee.id)
+    );
   };
 
   const handleCellClick = (day: ScheduleDay, employee: EmployeeType) => {
@@ -238,7 +250,9 @@ const Schedules = () => {
 
     let daySlots: DailyAvailabilitySlot[] = [];
     for (const av of dateAvailabilities) {
-      const slotsForDay = av.DailyAvailabilitySlot.filter((slot) => slot.day === targetDayName);
+      const slotsForDay = av.DailyAvailabilitySlot.filter(
+        (slot) => slot.day === targetDayName
+      );
       daySlots = daySlots.concat(slotsForDay);
     }
 
@@ -257,19 +271,22 @@ const Schedules = () => {
     const dateString = modalDate.toISOString();
 
     try {
-      const response = await fetch("http://localhost:8080/api/employees/scheduled-shifts", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          employeeId: modalEmployee.id,
-          date: dateString,
-          startTime: slot.startTime,
-          endTime: slot.endTime,
-        }),
-      });
+      const response = await fetch(
+        "http://localhost:8080/api/employees/scheduled-shifts",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            employeeId: modalEmployee.id,
+            date: dateString,
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+          }),
+        }
+      );
 
       if (response.ok) {
         console.log("Shift assigned successfully");
@@ -290,16 +307,21 @@ const Schedules = () => {
   }
 
   // Helper to find assigned shift for a given employee and date
-  const findAssignedShift = (employeeId: string, date: Date): ScheduledShift | undefined => {
+  const findAssignedShift = (
+    employeeId: string,
+    date: Date
+  ): ScheduledShift | undefined => {
     return scheduledShifts.find((shift) => {
       const shiftDate = new Date(shift.date);
-      return shift.employeeId === employeeId &&
-             shiftDate.toDateString() === date.toDateString();
+      return (
+        shift.employeeId === employeeId &&
+        shiftDate.toDateString() === date.toDateString()
+      );
     });
   };
 
   return (
-    <div className="w-full p-4 bg-gray-100 min-h-screen">
+    <div className="flex-1 w-full p-4">
       <div className="flex mb-6">
         <button
           className="border border-gray-200 bg-white px-2 py-1 hover:bg-gray-300"
@@ -364,12 +386,22 @@ const Schedules = () => {
                       key={day.date.toISOString()}
                       className={`w-[10vw] p-4 bg-white border border-gray-300`}
                     >
-                      <div className={`flex justify-between ${isSameDay(day.date, new Date()) ? "bg-gray-300" : ""}`}>
+                      <div
+                        className={`flex justify-between ${
+                          isSameDay(day.date, new Date()) ? "bg-gray-300" : ""
+                        }`}
+                      >
                         <div className="mr-7">
-                          <h3 className="text-left text-lg font-bold">{format(day.date, "E")}</h3>
-                          <p className="font-bold text-sm text-gray-500">{format(day.date, "MMM dd")}</p>
+                          <h3 className="text-left text-lg font-bold">
+                            {format(day.date, "E")}
+                          </h3>
+                          <p className="font-bold text-sm text-gray-500">
+                            {format(day.date, "MMM dd")}
+                          </p>
                         </div>
-                        <div className="flex items-center p-3">{day.employees}</div>
+                        <div className="flex items-center p-3">
+                          {day.employees}
+                        </div>
                       </div>
                     </th>
                   ))}
@@ -382,7 +414,10 @@ const Schedules = () => {
                       {employee.name}
                     </td>
                     {currentWeek.map((day) => {
-                      const assignedShift = findAssignedShift(employee.id, day.date);
+                      const assignedShift = findAssignedShift(
+                        employee.id,
+                        day.date
+                      );
 
                       if (assignedShift) {
                         // If there's an assigned shift, show it
@@ -396,34 +431,62 @@ const Schedules = () => {
                         );
                       } else {
                         // If no assigned shift, check availability
-                        const employeeAvailabilities = availabilitiesByEmployee[employee.id] || [];
+                        // Get all availability records for the employee
+                        const employeeAvailabilities =
+                          availabilitiesByEmployee[employee.id] || [];
                         const targetDayName = format(day.date, "EEEE");
-                        const dateAvailabilities = employeeAvailabilities.filter((av) => {
-                          const start = new Date(av.effectiveStart);
-                          const end = new Date(av.effectiveEnd);
-                          return day.date >= start && day.date <= end;
-                        });
 
-                        let daySlots: DailyAvailabilitySlot[] = [];
-                        for (const av of dateAvailabilities) {
-                          const slotsForDay = av.DailyAvailabilitySlot.filter(
-                            (slot) => slot.day === targetDayName
+                        // Filter availability records that actually cover the selected date
+                        const availabilityForDay =
+                          employeeAvailabilities.filter((av) => {
+                            const start = new Date(av.effectiveStart);
+                            const end = new Date(av.effectiveEnd);
+                            return day.date >= start && day.date <= end;
+                          });
+
+                        // Check if any of the availability records include the selected weekday
+                        const validAvailabilitySlots =
+                          availabilityForDay.flatMap((av) =>
+                            av.DailyAvailabilitySlot.filter(
+                              (slot) => slot.day === targetDayName
+                            )
                           );
-                          daySlots = daySlots.concat(slotsForDay);
-                        }
 
-                        const hasAvailableSlot = daySlots.some((s) => s.available);
+                        // Check if any slot is available
+                        const hasAvailableSlot = validAvailabilitySlots.some(
+                          (slot) => slot.available
+                        );
+                        const hasAvailabilityForDate =
+                          availabilityForDay.length > 0;
+
+                        // Get assigned shift (if any) for this date
+                        const assignedShift = scheduledShifts.find(
+                          (shift) =>
+                            shift.employeeId === employee.id &&
+                            new Date(shift.date).toDateString() ===
+                              day.date.toDateString()
+                        );
+
                         return (
                           <td
                             key={day.date.toISOString()}
                             className={`bg-white border border-gray-300 px-4 py-2 ${
-                              hasAvailableSlot ? "cursor-pointer hover:bg-gray-100" : ""
+                              hasAvailableSlot
+                                ? "cursor-pointer hover:bg-gray-100"
+                                : ""
                             }`}
                             onClick={() => {
-                              if (hasAvailableSlot) handleCellClick(day, employee);
+                              if (hasAvailableSlot)
+                                handleCellClick(day, employee);
                             }}
                           >
-                            {hasAvailableSlot ? "Click to assign" : "No availability"}
+                            {assignedShift
+                              ? `${assignedShift.startTime} - ${assignedShift.endTime}`
+                              : hasAvailabilityForDate
+                              ? hasAvailableSlot
+                                ? "Click to assign"
+                                : "No schedule"
+                              : ""}
                           </td>
                         );
                       }

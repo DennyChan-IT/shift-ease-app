@@ -78,18 +78,18 @@ export function Dashboard() {
 
   if (userPosition === "Admin") {
     return (
-      <div className="w-full bg-gray-100 p-6">
+      <div className="flex-1 w-full p-6">
         <div className="flex justify-around p-6 space-x-4">
           {/* Only show Total Organizations for Admin */}
-          <div className="bg-white shadow-md rounded-lg p-4 text-center w-1/3">
+          <div className="border shadow-md rounded-lg p-4 text-center w-1/3">
             <p className="text-gray-600">Total Organizations</p>
             <h3 className="text-2xl font-bold">{organizations.length}</h3>
           </div>
-          <div className="bg-white shadow-md rounded-lg p-4 text-center w-1/3">
+          <div className="border shadow-md rounded-lg p-4 text-center w-1/3">
             <p className="text-gray-600">Total Employees</p>
             <h3 className="text-2xl font-bold">{employees.length}</h3>
           </div>
-          <div className="bg-white shadow-md rounded-lg p-4 text-center w-1/3">
+          <div className="border shadow-md rounded-lg p-4 text-center w-1/3">
             <p className="text-gray-600">Pending Requests</p>
             <h3 className="text-2xl font-bold">{pendingRequest.length}</h3>
           </div>
@@ -105,7 +105,7 @@ export function Dashboard() {
                   to="/dashboard/create-organization"
                   className={
                     activeTab === "Create Organization"
-                      ? "text-blue-600 font-bold"
+                      ? "text-red-500 font-bold"
                       : "text-gray-600"
                   }
                   onClick={() => handleClick("Create Organization")}
@@ -118,7 +118,7 @@ export function Dashboard() {
                   to="/dashboard/requests"
                   className={`${
                     activeTab === "Requests"
-                      ? "text-blue-600 font-bold"
+                      ? "text-red-500 font-bold"
                       : "text-gray-600"
                   }`}
                   onClick={() => handleClick("Requests")}
@@ -136,13 +136,13 @@ export function Dashboard() {
   }
 
   return (
-    <div className="w-full bg-gray-100 p-6">
+    <div className="w-full p-6">
       <div className="flex justify-around p-6 space-x-4">
-        <div className="bg-white shadow-md rounded-lg p-4 text-center w-1/2">
+        <div className="border shadow-md rounded-lg p-4 text-center w-1/2">
           <p className="text-gray-600">Total Employees</p>
           <h3 className="text-2xl font-bold">{employees.length}</h3>
         </div>
-        <div className="bg-white shadow-md rounded-lg p-4 text-center w-1/2">
+        <div className="border shadow-md rounded-lg p-4 text-center w-1/2">
           <p className="text-gray-600">Pending Requests</p>
           <h3 className="text-2xl font-bold">{pendingRequest.length}</h3>
         </div>
@@ -158,7 +158,7 @@ export function Dashboard() {
                 to="/dashboard/requests"
                 className={`${
                   activeTab === "Requests"
-                    ? "text-blue-600 font-bold"
+                    ? "text-red-500 font-bold"
                     : "text-gray-600"
                 }`}
                 onClick={() => handleClick("Requests")}

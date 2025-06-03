@@ -33,17 +33,17 @@ export function Availability() {
   };
 
   return (
-    <div className="w-full p-6 bg-gray-100">
+    <div className="flex-1 w-full p-6">
       <div className="flex justify-between mb-4">
         <h2 className="text-xl font-bold">Availability</h2>
         <Link to="/add-availability">
-          <button className="bg-blue-500 text-white px-4 py-2 rounded">
+          <button className="bg-black text-white px-4 py-2 rounded hover:bg-gray-700 transition">
             + Add Availability
           </button>
         </Link>
       </div>
       <table className="w-full bg-white shadow rounded">
-        <thead className="bg-gray-100 border-b">
+        <thead className="border border-b">
           <tr>
             <th className="px-4 py-2 text-left">Employee</th>
             <th className="px-4 py-2 text-left">Effective Dates</th>

@@ -57,7 +57,7 @@ export default function Organizations() {
           schedules.
         </p>
         <Link to="/dashboard/create-organization">
-          <button className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-700 transition">
+          <button className="bg-black text-white py-2 px-4 rounded hover:bg-gray-700 transition">
             + Add Your First Organization
           </button>
         </Link>
@@ -67,13 +67,13 @@ export default function Organizations() {
 
   // If the user is an admin, show the list of all organizations
   return (
-    <div className="w-full p-6 bg-gray-100">
+    <div className="flex-1 w-full p-6">
       <h2 className="text-2xl font-bold mb-4">Organizations Overview</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {organizations.map((org) => (
           <div
             key={org.id}
-            className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition relative"
+            className="bg-white p-6 border rounded-lg shadow-md hover:shadow-lg transition relative"
           >
             <div className="flex justify-between mb-2">
               <h3 className="text-lg font-semibold text-gray-800">{org.name}</h3>

@@ -38,7 +38,7 @@ export function CreateOrganization() {
   };
 
   return (
-    <div className="pl-5 bg-white p-4 rounded-lg shadow-md">
+    <div className="pl-5 bg-white p-4 border rounded-lg shadow-md">
       <h3 className="text-lg font-bold mb-4">Organization Details</h3>
       <form onSubmit={handleSubmit}>
         <label className="block mb-2">Organization Name</label>
@@ -59,7 +59,7 @@ export function CreateOrganization() {
 
         <button
           type="submit"
-          className="bg-purple-500 text-white py-2 px-4 rounded hover:bg-purple-700"
+          className="bg-black text-white py-2 px-4 rounded hover:bg-gray-700 transition"
         >
           Create Organization
         </button>
