@@ -6,7 +6,8 @@ import { useAuth } from "@clerk/clerk-react";
 type EmployeeType = {
   id: string;
   name: string;
-  organizationId: string;
+  organizationId: string | null; // can be null (for admin, etc.)
+  position?: string;
 };
 
 type DailyAvailabilitySlot = {
@@ -26,7 +27,7 @@ type Availability = {
   employee: {
     id: string;
     name: string;
-    organizationId: string;
+    organizationId: string | null;
   };
 };
 
@@ -39,7 +40,7 @@ type ScheduledShift = {
   employee: {
     id: string;
     name: string;
-    organizationId: string;
+    organizationId: string | null;
   };
 };
 
@@ -53,85 +54,165 @@ type AvailabilitySlot = {
   endTime: string;
 };
 
-function AvailabilityModal({
+type AvailabilityModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  date: Date | null;
+  employee: { id: string; name: string } | null;
+  // The full availability for that day (could be merged from multiple slots)
+  availabilityData: { startTime: string; endTime: string; available: boolean }[];
+  onAssign: (slot: AvailabilitySlot) => void;
+};
+
+// Convert to 12-hour format (handle "24:00" specially)
+function convertTo12Hour(timeStr: string): string {
+  if (timeStr === "24:00") return "24:00";
+  const [hoursStr, minutes] = timeStr.split(":");
+  let hours = parseInt(hoursStr, 10);
+  const period = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  if (hours === 0) hours = 12;
+  return `${hours}:${minutes} ${period}`;
+}
+
+export function AvailabilityModal({
   isOpen,
   onClose,
   date,
   employee,
   availabilityData,
   onAssign,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  date: Date | null;
-  employee: EmployeeType | null;
-  availabilityData: DailyAvailabilitySlot[];
-  onAssign: (slot: AvailabilitySlot) => void;
-}) {
-  if (!isOpen || !employee || !date) return null;
+}: AvailabilityModalProps) {
+  const availableSlots = availabilityData.filter((slot) => slot.available);
+  const defaultStart =
+    availableSlots.length > 0
+      ? availableSlots.reduce((prev, curr) =>
+          curr.startTime! < prev.startTime! ? curr : prev
+        ).startTime!
+      : "00:00";
+  const defaultEndOriginal =
+    availableSlots.length > 0
+      ? availableSlots.reduce((prev, curr) =>
+          curr.endTime! > prev.endTime! ? curr : prev
+        ).endTime!
+      : "23:59";
+  const defaultEndForInput = defaultEndOriginal === "24:00" ? "00:00" : defaultEndOriginal;
 
-  const validSlots = availabilityData
-    .filter((slot) => slot.available)
-    .map((slot) => {
-      const start = slot.allDay && !slot.startTime ? "00:00" : slot.startTime;
-      const end = slot.allDay && !slot.endTime ? "23:59" : slot.endTime;
-      return { startTime: start || "", endTime: end || "" };
-    });
+  const [customStart, setCustomStart] = useState(defaultStart);
+  const [customEnd, setCustomEnd] = useState(defaultEndOriginal);
 
-  if (validSlots.length === 0) {
-    return (
-      <dialog open className="rounded-lg p-6 bg-white shadow-lg">
-        <h2 className="text-xl font-semibold mb-4">
-          No valid slots available for {employee.name} on
-          {format(date, "MMM dd, yyyy")}.
-        </h2>
-        <button
-          onClick={onClose}
-          className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
-        >
-          Close
-        </button>
-      </dialog>
-    );
+  useEffect(() => {
+    if (isOpen) {
+      setCustomStart(defaultStart);
+      setCustomEnd(defaultEndOriginal);
+    }
+  }, [isOpen, defaultStart, defaultEndOriginal]);
+
+  function timeStringToMinutes(time: string): number {
+    const [hours, minutes] = time.split(":").map(Number);
+    return hours * 60 + minutes;
   }
+  const convertInputTimeToMinutes = (time: string, defaultIs24: boolean): number => {
+    if (defaultIs24 && time === "00:00") return 1440;
+    return timeStringToMinutes(time);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const defaultIs24 = defaultEndOriginal === "24:00";
+    const customStartMins = timeStringToMinutes(customStart);
+    const customEndForCalc = customEnd === "24:00" ? "00:00" : customEnd;
+    const customEndMins = convertInputTimeToMinutes(customEndForCalc, defaultIs24);
+    const defaultStartMins = timeStringToMinutes(defaultStart);
+    const defaultEndMins = defaultIs24 ? 1440 : timeStringToMinutes(defaultEndOriginal);
+
+    if (
+      customStartMins < defaultStartMins ||
+      customEndMins > defaultEndMins ||
+      customStartMins >= customEndMins
+    ) {
+      alert("Please select times within the available range.");
+      return;
+    }
+    onAssign({ startTime: customStart, endTime: customEnd });
+    onClose();
+  };
+
+  if (!isOpen || !employee || !date) return null;
 
   return (
     <dialog open className="rounded-lg p-6 bg-white shadow-lg">
       <h2 className="text-xl font-semibold mb-4">
         Assign Hours for {employee.name} on {format(date, "MMM dd, yyyy")}
       </h2>
-      <ul className="space-y-2 mb-4">
-        {validSlots.map((slot, idx) => (
-          <li key={idx}>
-            <button
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              onClick={() => {
-                onAssign(slot);
-                onClose();
-              }}
-            >
-              {slot.startTime} - {slot.endTime}
-            </button>
-          </li>
-        ))}
-      </ul>
-      <button
-        onClick={onClose}
-        className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
-      >
-        Cancel
-      </button>
+      <p className="mb-4">
+        Available from{" "}
+        <strong>{convertTo12Hour(defaultStart)}</strong> to{" "}
+        <strong>
+          {defaultEndOriginal === "24:00"
+            ? "12:00 AM"
+            : convertTo12Hour(defaultEndOriginal)}
+        </strong>
+      </p>
+      <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+        <div>
+          <label className="block font-medium">Start Time</label>
+          <input
+            type="time"
+            value={customStart}
+            onChange={(e) => setCustomStart(e.target.value)}
+            min={defaultStart}
+            max={defaultEndOriginal === "24:00" ? undefined : defaultEndOriginal}
+            required
+            className="border p-2 rounded"
+          />
+        </div>
+        <div>
+          <label className="block font-medium">End Time</label>
+          <input
+            type="time"
+            value={customEnd === "24:00" ? defaultEndForInput : customEnd}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (defaultEndOriginal === "24:00" && val === "00:00") {
+                setCustomEnd("24:00");
+              } else {
+                setCustomEnd(val);
+              }
+            }}
+            min={customStart}
+            max={defaultEndOriginal === "24:00" ? defaultEndForInput : defaultEndOriginal}
+            required
+            className="border p-2 rounded"
+          />
+        </div>
+        <div className="flex justify-end space-x-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Assign Shift
+          </button>
+        </div>
+      </form>
     </dialog>
   );
-}
+};
 
 const Schedules = () => {
   const [currentWeek, setCurrentWeek] = useState<ScheduleDay[] | null>(null);
   const [selectedOrganization, setSelectedOrganization] = useState<string>("");
-  const [availableEmployees, setAvailableEmployees] = useState<EmployeeType[]>(
-    []
-  );
-  const [addedEmployees, setAddedEmployees] = useState<EmployeeType[]>([]);
+  // Holds all employees for the selected organization (from API)
+  const [employeesForOrg, setEmployeesForOrg] = useState<EmployeeType[]>([]);
+  // Holds employees manually added to the schedule (even if no shift yet)
+  const [activeEmployees, setActiveEmployees] = useState<EmployeeType[]>([]);
   const { organizations } = useOrganizations();
   const { getToken } = useAuth();
 
@@ -145,7 +226,7 @@ const Schedules = () => {
   const [modalEmployee, setModalEmployee] = useState<EmployeeType | null>(null);
   const [modalSlots, setModalSlots] = useState<DailyAvailabilitySlot[]>([]);
 
-  // Initialize current week
+  // Initialize current week.
   useEffect(() => {
     const today = new Date();
     const weekStart = startOfWeek(today, { weekStartsOn: 1 });
@@ -157,37 +238,50 @@ const Schedules = () => {
     setCurrentWeek(days);
   }, []);
 
+  // Fetch employees for a given organization.
+  const fetchEmployeesByOrganization = async (orgId: string) => {
+    const token = await getToken();
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/employees?organizationId=${orgId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (response.ok) {
+        const data: EmployeeType[] = await response.json();
+        // Only include employees whose organizationId exactly matches the selected orgId.
+        setEmployeesForOrg(data.filter(emp => emp.organizationId === orgId));
+      } else {
+        console.error("Failed to fetch employees for organization");
+      }
+    } catch (error) {
+      console.error("Error fetching employees:", error);
+    }
+  };
+
   const fetchAvailabilities = async (orgId: string) => {
     const token = await getToken();
-    const response = await fetch(
-      "http://localhost:8080/api/employees/availabilities",
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch("http://localhost:8080/api/employees/availabilities", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
     if (!response.ok) {
       console.error("Failed to fetch availabilities");
       return;
     }
-
     const data: Availability[] = await response.json();
-    const filteredData = data.filter(
-      (av) => av.employee.organizationId === orgId
-    );
-
-    // **Only include employees that have availability records**
-    const employeesWithAvailability = filteredData.map((av) => ({
-      id: av.employee.id,
-      name: av.employee.name,
-      organizationId: av.employee.organizationId,
-    }));
-
-    // **Update state with only employees who have submitted availability**
-    setAvailableEmployees(employeesWithAvailability);
-
+    const filteredData = data.filter((av) => av.employee.organizationId === orgId);
+    // Set available employees based on availability if needed.
+    // (This state is used for the dropdown below.)
+    // Here could also deduplicate if necessary.
+    // For simplicity, assume the API returns unique records.
+    // can adjust as needed.
     const grouped: { [employeeId: string]: Availability[] } = {};
     for (const avail of filteredData) {
       if (!grouped[avail.employeeId]) {
@@ -217,25 +311,22 @@ const Schedules = () => {
     }
   };
 
-  const handleOrganizationChange = async (
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
+  const handleOrganizationChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
     const orgId = event.target.value;
     setSelectedOrganization(orgId);
     if (orgId) {
+      await fetchEmployeesByOrganization(orgId);
       await fetchAvailabilities(orgId);
       await fetchScheduledShifts(orgId);
     }
   };
 
+  // When adding a new employee manually, add to the activeEmployees list.
   const handleAddEmployee = (employee: EmployeeType) => {
-    setAddedEmployees((prev) => {
+    setActiveEmployees((prev) => {
       if (prev.some((e) => e.id === employee.id)) return prev;
       return [...prev, employee];
     });
-    setAvailableEmployees((prev) =>
-      prev.filter((emp) => emp.id !== employee.id)
-    );
   };
 
   const handleCellClick = (day: ScheduleDay, employee: EmployeeType) => {
@@ -250,9 +341,7 @@ const Schedules = () => {
 
     let daySlots: DailyAvailabilitySlot[] = [];
     for (const av of dateAvailabilities) {
-      const slotsForDay = av.DailyAvailabilitySlot.filter(
-        (slot) => slot.day === targetDayName
-      );
+      const slotsForDay = av.DailyAvailabilitySlot.filter((slot) => slot.day === targetDayName);
       daySlots = daySlots.concat(slotsForDay);
     }
 
@@ -269,31 +358,22 @@ const Schedules = () => {
     if (!modalEmployee || !modalDate) return;
     const token = await getToken();
     const dateString = modalDate.toISOString();
-
     try {
-      const response = await fetch(
-        "http://localhost:8080/api/employees/scheduled-shifts",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            employeeId: modalEmployee.id,
-            date: dateString,
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-          }),
-        }
-      );
-
+      const response = await fetch("http://localhost:8080/api/employees/scheduled-shifts", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          employeeId: modalEmployee.id,
+          date: dateString,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+        }),
+      });
       if (response.ok) {
-        console.log("Shift assigned successfully");
-        // After assigning a shift, refetch the scheduled shifts to update the UI
-        if (selectedOrganization) {
-          await fetchScheduledShifts(selectedOrganization);
-        }
+        console.log("Shift assigned successfully with custom times!");
       } else {
         console.error("Failed to assign shift:", await response.text());
       }
@@ -306,17 +386,26 @@ const Schedules = () => {
     return <div>Loading...</div>;
   }
 
-  // Helper to find assigned shift for a given employee and date
-  const findAssignedShift = (
-    employeeId: string,
-    date: Date
-  ): ScheduledShift | undefined => {
+  // Compute the list of employees to display.
+  // They are either employees that already have a scheduled shift OR have been manually added.
+  const employeesWithShift = employeesForOrg.filter(employee =>
+    scheduledShifts.some(shift => shift.employeeId === employee.id)
+  );
+  const displayEmployees = Array.from(
+    new Map(
+      [...employeesWithShift, ...activeEmployees].map(emp => [emp.id, emp])
+    ).values()
+  );
+
+  // For the dropdown, list available employees that are not already displayed.
+  const uniqueAvailableEmployees = employeesForOrg.filter(
+    (emp) => !displayEmployees.some((de) => de.id === emp.id)
+  );
+
+  const findAssignedShift = (employeeId: string, date: Date): ScheduledShift | undefined => {
     return scheduledShifts.find((shift) => {
       const shiftDate = new Date(shift.date);
-      return (
-        shift.employeeId === employeeId &&
-        shiftDate.toDateString() === date.toDateString()
-      );
+      return shift.employeeId === employeeId && shiftDate.toDateString() === date.toDateString();
     });
   };
 
@@ -378,7 +467,7 @@ const Schedules = () => {
         <div className="flex">
           <div className="rounded-t-xl overflow-hidden border border-gray-300 w-full">
             <table className="w-full">
-              <thead>
+              <thead className="bg-gray-100 border-b">
                 <tr>
                   <th className="w-[20vw] p-4 bg-white border border-gray-300"></th>
                   {currentWeek.map((day) => (
@@ -392,35 +481,27 @@ const Schedules = () => {
                         }`}
                       >
                         <div className="mr-7">
-                          <h3 className="text-left text-lg font-bold">
-                            {format(day.date, "E")}
-                          </h3>
+                          <h3 className="text-left text-lg font-bold">{format(day.date, "E")}</h3>
                           <p className="font-bold text-sm text-gray-500">
                             {format(day.date, "MMM dd")}
                           </p>
                         </div>
-                        <div className="flex items-center p-3">
-                          {day.employees}
-                        </div>
+                        <div className="flex items-center p-3">{day.employees}</div>
                       </div>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {addedEmployees.map((employee) => (
+                {/* Render rows for employees in displayEmployees */}
+                {displayEmployees.map((employee) => (
                   <tr key={employee.id}>
                     <td className="bg-white border border-gray-300 px-4 py-2 font-bold text-left">
                       {employee.name}
                     </td>
                     {currentWeek.map((day) => {
-                      const assignedShift = findAssignedShift(
-                        employee.id,
-                        day.date
-                      );
-
+                      const assignedShift = findAssignedShift(employee.id, day.date);
                       if (assignedShift) {
-                        // If there's an assigned shift, show it
                         return (
                           <td
                             key={day.date.toISOString()}
@@ -430,59 +511,29 @@ const Schedules = () => {
                           </td>
                         );
                       } else {
-                        // If no assigned shift, check availability
-                        // Get all availability records for the employee
-                        const employeeAvailabilities =
-                          availabilitiesByEmployee[employee.id] || [];
+                        const employeeAvailabilities = availabilitiesByEmployee[employee.id] || [];
                         const targetDayName = format(day.date, "EEEE");
-
-                        // Filter availability records that actually cover the selected date
-                        const availabilityForDay =
-                          employeeAvailabilities.filter((av) => {
-                            const start = new Date(av.effectiveStart);
-                            const end = new Date(av.effectiveEnd);
-                            return day.date >= start && day.date <= end;
-                          });
-
-                        // Check if any of the availability records include the selected weekday
-                        const validAvailabilitySlots =
-                          availabilityForDay.flatMap((av) =>
-                            av.DailyAvailabilitySlot.filter(
-                              (slot) => slot.day === targetDayName
-                            )
-                          );
-
-                        // Check if any slot is available
-                        const hasAvailableSlot = validAvailabilitySlots.some(
-                          (slot) => slot.available
+                        const availabilityForDay = employeeAvailabilities.filter((av) => {
+                          const start = new Date(av.effectiveStart);
+                          const end = new Date(av.effectiveEnd);
+                          return day.date >= start && day.date < end;
+                        });
+                        const validAvailabilitySlots = availabilityForDay.flatMap((av) =>
+                          av.DailyAvailabilitySlot.filter((slot) => slot.day === targetDayName)
                         );
-                        const hasAvailabilityForDate =
-                          availabilityForDay.length > 0;
-
-                        // Get assigned shift (if any) for this date
-                        const assignedShift = scheduledShifts.find(
-                          (shift) =>
-                            shift.employeeId === employee.id &&
-                            new Date(shift.date).toDateString() ===
-                              day.date.toDateString()
-                        );
-
+                        const hasAvailableSlot = validAvailabilitySlots.some((slot) => slot.available);
+                        const hasAvailabilityForDate = availabilityForDay.length > 0;
                         return (
                           <td
                             key={day.date.toISOString()}
                             className={`bg-white border border-gray-300 px-4 py-2 ${
-                              hasAvailableSlot
-                                ? "cursor-pointer hover:bg-gray-100"
-                                : ""
+                              hasAvailableSlot ? "cursor-pointer hover:bg-gray-100" : ""
                             }`}
                             onClick={() => {
-                              if (hasAvailableSlot)
-                                handleCellClick(day, employee);
+                              if (hasAvailableSlot) handleCellClick(day, employee);
                             }}
                           >
-                            {assignedShift
-                              ? `${assignedShift.startTime} - ${assignedShift.endTime}`
-                              : hasAvailabilityForDate
+                            {hasAvailabilityForDate
                               ? hasAvailableSlot
                                 ? "Click to assign"
                                 : "No schedule"
@@ -498,7 +549,7 @@ const Schedules = () => {
                     <select
                       className="p-2 border rounded"
                       onChange={(e) => {
-                        const selectedEmp = availableEmployees.find(
+                        const selectedEmp = uniqueAvailableEmployees.find(
                           (emp) => emp.id === e.target.value
                         );
                         if (selectedEmp) handleAddEmployee(selectedEmp);
@@ -508,7 +559,7 @@ const Schedules = () => {
                       <option value="" disabled>
                         Add Employee
                       </option>
-                      {availableEmployees.map((employee) => (
+                      {uniqueAvailableEmployees.map((employee) => (
                         <option key={employee.id} value={employee.id}>
                           {employee.name}
                         </option>
@@ -533,7 +584,11 @@ const Schedules = () => {
         onClose={() => setIsModalOpen(false)}
         date={modalDate}
         employee={modalEmployee}
-        availabilityData={modalSlots}
+        availabilityData={modalSlots.map((slot) => ({
+          startTime: slot.startTime ?? "00:00",
+          endTime: slot.endTime === "24:00" ? "24:00" : slot.endTime ?? "23:59",
+          available: slot.available,
+        }))}
         onAssign={handleAssign}
       />
     </div>
