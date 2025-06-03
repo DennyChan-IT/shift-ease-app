@@ -16,7 +16,7 @@ type OrganizationContextType = {
 
 const OrganizationContext = createContext<OrganizationContextType>({
   organizations: [],
-  fetchOrganizations:() =>{},
+  fetchOrganizations: () => {},
   remove: () => {},
 });
 
@@ -25,9 +25,7 @@ type Props = {
 };
 
 export function OrganizationContextProvider({ children }: Props) {
-  const [organizations, setOrganizations] = useState<
-    OrganizationType[]
-  >([]);
+  const [organizations, setOrganizations] = useState<OrganizationType[]>([]);
   const { getToken } = useAuth();
 
   const fetchOrganizations = async () => {
@@ -49,11 +47,11 @@ export function OrganizationContextProvider({ children }: Props) {
       console.error("Error fetching organizations:", error);
     }
   };
-
-   useEffect(() => {
+  
+  useEffect(() => {
     fetchOrganizations();
   }, []);
-  
+
 
   const remove = async (id: OrganizationType["id"]) => {
     const token = await getToken();
@@ -70,9 +68,7 @@ export function OrganizationContextProvider({ children }: Props) {
       );
 
       if (response.ok) {
-        setOrganizations((prev) =>
-          prev.filter((org) => org.id !== id)
-        );
+        setOrganizations((prev) => prev.filter((org) => org.id !== id));
       } else {
         console.error("Failed to delete organization");
       }

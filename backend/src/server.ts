@@ -29,7 +29,7 @@ app.use(validateUser)
 
 
 app.use("/api/organizations", organizationRouter);
-app.use("/api/employee", employeeRouter);
+app.use("/api/employees", employeeRouter);
 
 app.listen(8080, () => {
     console.log("[server]: Listening at http://localhost:8080");
