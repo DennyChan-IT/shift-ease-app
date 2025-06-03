@@ -8,13 +8,13 @@ import { Dashboard } from "../pages/Dashboard";
 import { CreateOrganization } from "../components/CreateOrganization";
 import Organizations from "../pages/Organizations";
 import OrganizationDetails from "../pages/OrganizationDetails";
-import ManagerSignUp from "../pages/ManagerSignUp";
 import Schedules from "../pages/Schedules";
 import PublicRoutes from "./public-router";
 import PendingRequests from "../components/PendingRequests";
 import RoleProtectedRoute from "./role-protected-router";
 import { Availability } from "../pages/Availability";
 import AddAvailability from "../pages/AddAvailability";
+import EmployeeSignUp from "../pages/EmployeeSignUp";
 
 export const router = createBrowserRouter([
   {
@@ -31,6 +31,10 @@ export const router = createBrowserRouter([
       {
         path: "/admin-signup",
         element: <AdminSignUp />,
+      },
+      {
+        path: "/employee-signup",
+        element: <EmployeeSignUp />,
       },
     ],
   },
