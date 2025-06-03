@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { EmployeeType } from "../types/Employee";
+import { format, addDays } from "date-fns";
 
 type AvailabilityDay = {
   day: string;
@@ -12,67 +13,114 @@ type AvailabilityDay = {
 };
 
 export default function AddAvailability() {
-  const { id } = useParams();
+  const { id } = useParams(); // ID for editing
   const navigate = useNavigate();
   const { getToken } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [userOrganizationId, setUserOrganizationId] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [, setUserOrganizationId] = useState<string | null>(null);
+  const [, setUserId] = useState<string | null>(null);
 
   const [employees, setEmployees] = useState<EmployeeType[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>("");
-  const [effectiveStartDate, setEffectiveStartDate] = useState<string>("");
-  const [effectiveEndDate, setEffectiveEndDate] = useState<string>("");
+
+  // Helper: Format a Date as YYYY-MM-DD using local time.
+  const formatDateLocal = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const day = date.getDate().toString().padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper: Given any date, return the Monday of that week.
+  const getMondayOfDate = (date: Date): Date => {
+    // In JavaScript, getDay(): 0=Sunday, 1=Monday, etc.
+    const day = date.getDay();
+    // For Monday, offset is 0; for Tuesday, offset is 1; for Sunday (0), offset is 6.
+    const offset = (day + 6) % 7;
+    const monday = new Date(date);
+    monday.setDate(date.getDate() - offset);
+    return monday;
+  };
+
+  // Helper: Get current week's Monday (even if it's in the past)
+  const getCurrentMonday = (): string => {
+    const now = new Date();
+    const monday = getMondayOfDate(now);
+    return formatDateLocal(monday);
+  };
+
+  // Set default dates (Current Monday → Sunday)
+  const [effectiveStartDate, setEffectiveStartDate] = useState<string>(
+    format(getCurrentMonday() + "T00:00", "yyyy-MM-dd")
+  );
+  const [effectiveEndDate, setEffectiveEndDate] = useState<string>(
+    format(addDays(getCurrentMonday() + "T00:00", 6), "yyyy-MM-dd")
+  );
+
+  // Handler for when the date input changes.
+  // It takes whatever date the user picks, computes that week's Monday and Sunday.
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.value;
+    // Append "T00:00" so that the date is treated in local time.
+    const selectedDate = new Date(selected + "T00:00");
+    const monday = getMondayOfDate(selectedDate);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
+    // Update state with the Monday and Sunday of the chosen week.
+    setEffectiveStartDate(formatDateLocal(monday));
+    setEffectiveEndDate(formatDateLocal(sunday));
+  };
 
   const [availability, setAvailability] = useState<AvailabilityDay[]>([
     {
       day: "Monday",
-      allDay: false,
-      available: true,
-      startTime: "",
-      endTime: "",
+      allDay: true,
+      available: false,
+      startTime: "09:00",
+      endTime: "23:00",
     },
     {
       day: "Tuesday",
-      allDay: false,
-      available: true,
-      startTime: "",
-      endTime: "",
+      allDay: true,
+      available: false,
+      startTime: "09:00",
+      endTime: "23:00",
     },
     {
       day: "Wednesday",
-      allDay: false,
-      available: true,
-      startTime: "",
-      endTime: "",
+      allDay: true,
+      available: false,
+      startTime: "09:00",
+      endTime: "23:00",
     },
     {
       day: "Thursday",
-      allDay: false,
-      available: true,
-      startTime: "",
-      endTime: "",
+      allDay: true,
+      available: false,
+      startTime: "09:00",
+      endTime: "23:00",
     },
     {
       day: "Friday",
-      allDay: false,
-      available: true,
-      startTime: "",
-      endTime: "",
+      allDay: true,
+      available: false,
+      startTime: "09:00",
+      endTime: "24:00",
     },
     {
       day: "Saturday",
-      allDay: false,
-      available: true,
-      startTime: "",
-      endTime: "",
+      allDay: true,
+      available: false,
+      startTime: "09:00",
+      endTime: "24:00",
     },
     {
       day: "Sunday",
-      allDay: false,
-      available: true,
-      startTime: "",
-      endTime: "",
+      allDay: true,
+      available: false,
+      startTime: "09:00",
+      endTime: "23:00",
     },
   ]);
 
@@ -212,7 +260,7 @@ export default function AddAvailability() {
   }
 
   return (
-    <div className="w-full p-6 bg-gray-100 min-h-screen">
+    <div className="flex-1 w-full p-6">
       <h2 className="text-xl font-bold mb-4">
         {id ? "Edit Availability" : "Add Availability"}
       </h2>
@@ -251,22 +299,22 @@ export default function AddAvailability() {
             <input
               type="date"
               value={effectiveStartDate}
-              onChange={(e) => setEffectiveStartDate(e.target.value)}
+              onChange={handleStartDateChange}
               className="p-2 border rounded w-1/2"
               required
+              min={getCurrentMonday()} // Allows dates from the current week's Monday onward.
             />
             <input
               type="date"
               value={effectiveEndDate}
-              onChange={(e) => setEffectiveEndDate(e.target.value)}
+              readOnly
               className="p-2 border rounded w-1/2"
-              required
             />
           </div>
         </label>
 
         {/* Availability Slots */}
-        <div className="bg-white p-4 rounded-lg shadow space-y-4">
+        <div className="p-4 border rounded-lg shadow space-y-4">
           {availability.map((day, dayIndex) => (
             <div key={day.day}>
               <span className="font-bold">{day.day}</span>

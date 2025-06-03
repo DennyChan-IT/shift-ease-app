@@ -96,7 +96,7 @@ export default function OrganizationDetails() {
   }, [id]);
 
   return (
-    <div className="w-full p-6 bg-gray-100 min-h-screen">
+    <div className="flex-1 w-full p-6">
       <Link
         to="/organizations"
         className="text-blue-500 flex items-center mb-6 hover:underline"
