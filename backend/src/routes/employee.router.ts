@@ -3,6 +3,7 @@ import {
   addAvailability,
   addEmployee,
   approveRequest,
+  assignScheduledShift,
   deleteAvailability,
   deleteEmployee,
   getAllAvailabilities,
@@ -10,6 +11,7 @@ import {
   getAllPendingRequest,
   getAvailabilityByOrganization,
   getEachAvailabilities,
+  getScheduledShiftsByOrganization,
   loggedUser,
   rejectRequest,
   updateEmployee,
@@ -33,3 +35,6 @@ router.post("/availabilities", addAvailability);
 router.delete("/availabilities/:id", deleteAvailability);
 
 router.get("/availabilities-by-organization", getAvailabilityByOrganization);
+
+router.get("/scheduled-shifts", getScheduledShiftsByOrganization);
+router.post("/scheduled-shifts", assignScheduledShift);
