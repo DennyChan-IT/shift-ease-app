@@ -4,6 +4,7 @@ import express from "express";
 import { router as organizationRouter } from "./routes/organization.router";
 import cors from "cors";
 import { validateUser } from "./middleware/validate-user";
+import { router as employeeRouter} from "./routes/employee.router";
 
 
 declare global {
@@ -28,6 +29,7 @@ app.use(validateUser)
 
 
 app.use("/api/organizations", organizationRouter);
+app.use("/api/employee", employeeRouter);
 
 app.listen(8080, () => {
     console.log("[server]: Listening at http://localhost:8080");

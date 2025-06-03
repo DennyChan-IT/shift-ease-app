@@ -1,6 +1,10 @@
 export type OrganizationType = {
-    id: number;
+    id: string;
     name: string;
     location: string;
-    createdAt: string;
+    employees: {
+      id: string;
+      name: string;
+      position: string;
+    }[];
 }
