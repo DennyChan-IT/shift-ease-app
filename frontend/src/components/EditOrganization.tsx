@@ -41,19 +41,24 @@ export function EditOrganization({ organization, onClose }: Props) {
 
   return (
     <>
-      <button onClick={open} className="text-gray-500 hover:text-blue-500">
+      <button
+        onClick={open}
+        className="text-gray-500 hover:text-blue-500 focus:outline-none"
+        aria-label="Edit Organization"
+      >
         <FiEdit />
       </button>
 
       <dialog
         ref={dialogRef}
-        className="rounded-lg w-80 p-6 bg-white shadow-lg"
+        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg w-96 p-6 shadow-lg z-50"
       >
-        <h3 className="text-lg font-semibold mb-4">Edit Organization</h3>
+        <h2 className="text-xl font-semibold mb-4">Edit Organization</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block mb-1">Name</label>
+            <label className="block mb-1 font-medium">Name</label>
             <input
+              type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full p-2 border rounded"
@@ -61,27 +66,28 @@ export function EditOrganization({ organization, onClose }: Props) {
             />
           </div>
           <div>
-            <label className="block mb-1">Location</label>
+            <label className="block mb-1 font-medium">Location</label>
             <input
+              type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               className="w-full p-2 border rounded"
               required
             />
           </div>
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end space-x-4">
             <button
               type="button"
               onClick={close}
-              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+              className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-200"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
             >
-              Save
+              Save Changes
             </button>
           </div>
         </form>

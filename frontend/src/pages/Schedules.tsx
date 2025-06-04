@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
 import { useOrganizations } from "../contexts/organization-context";
 import { useAuth } from "@clerk/clerk-react";
@@ -131,7 +131,10 @@ export function AvailabilityModal({
     const defaultIs24 = defaultEndOriginal === "24:00";
     const customStartMins = timeStringToMinutes(customStart);
     const customEndForCalc = customEnd === "24:00" ? "00:00" : customEnd;
-    const customEndMins = convertInputTimeToMinutes(customEndForCalc, defaultIs24);
+    const customEndMins = convertInputTimeToMinutes(
+      customEndForCalc,
+      defaultIs24
+    );
     const defaultStartMins = timeStringToMinutes(defaultStart);
     const defaultEndMins = defaultIs24
       ? 1440
@@ -161,8 +164,7 @@ export function AvailabilityModal({
           Assign Hours for {employee.name} on {format(date, "MMM dd, yyyy")}
         </h2>
         <p className="mb-4">
-          Available from
-          <strong>{convertTo12Hour(defaultStart)}</strong> to
+          Available from <strong>{convertTo12Hour(defaultStart)}</strong> to{" "}
           <strong>
             {defaultEndOriginal === "24:00"
               ? "12:00 AM"
@@ -178,7 +180,9 @@ export function AvailabilityModal({
               value={customStart}
               onChange={(e) => setCustomStart(e.target.value)}
               min={defaultStart}
-              max={defaultEndOriginal === "24:00" ? undefined : defaultEndOriginal}
+              max={
+                defaultEndOriginal === "24:00" ? undefined : defaultEndOriginal
+              }
               required
               className="border p-2 rounded"
             />
@@ -197,7 +201,11 @@ export function AvailabilityModal({
                 }
               }}
               min={customStart}
-              max={defaultEndOriginal === "24:00" ? defaultEndForInput : defaultEndOriginal}
+              max={
+                defaultEndOriginal === "24:00"
+                  ? defaultEndForInput
+                  : defaultEndOriginal
+              }
               required
               className="border p-2 rounded"
             />
@@ -212,7 +220,7 @@ export function AvailabilityModal({
             </button>
             <button
               type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
             >
               Assign Shift
             </button>
@@ -228,10 +236,19 @@ type EditShiftModalProps = {
   isOpen: boolean;
   shift: ScheduledShift | null;
   onClose: () => void;
-  onUpdate: (updatedShift: { id: string; startTime: string; endTime: string }) => void;
+  onUpdate: (updatedShift: {
+    id: string;
+    startTime: string;
+    endTime: string;
+  }) => void;
 };
 
-function EditShiftModal({ isOpen, shift, onClose, onUpdate }: EditShiftModalProps) {
+function EditShiftModal({
+  isOpen,
+  shift,
+  onClose,
+  onUpdate,
+}: EditShiftModalProps) {
   const [startTime, setStartTime] = useState(shift ? shift.startTime : "");
   const [endTime, setEndTime] = useState(shift ? shift.endTime : "");
 
@@ -257,11 +274,14 @@ function EditShiftModal({ isOpen, shift, onClose, onUpdate }: EditShiftModalProp
       {/* Modal Container */}
       <div className="relative bg-white rounded-lg p-6 shadow-lg">
         <h2 className="text-xl font-semibold mb-4">
-          Edit Shift for {shift.employee.name} on {format(new Date(shift.date), "MMM dd, yyyy")}
+          Edit Shift for {shift.employee.name} on{" "}
+          {format(new Date(shift.date), "MMM dd, yyyy")}
         </h2>
         <p className="mb-4">
-          Available from <strong>{shift.startTime}</strong> to
-          <strong>{shift.endTime === "24:00" ? "12:00 AM" : shift.endTime}</strong>
+          Available from <strong>{shift.startTime}</strong> to{" "}
+          <strong>
+            {shift.endTime === "24:00" ? "12:00 AM" : shift.endTime}
+          </strong>
         </p>
         <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
           <div>
@@ -302,7 +322,7 @@ function EditShiftModal({ isOpen, shift, onClose, onUpdate }: EditShiftModalProp
             </button>
             <button
               type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
             >
               Save Shift
             </button>
@@ -339,7 +359,27 @@ const Schedules = () => {
 
   // New state to hold user role and organization for access control
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [userOrganizationId, setUserOrganizationId] = useState<string | null>(null);
+  const [userOrganizationId, setUserOrganizationId] = useState<string | null>(
+    null
+  );
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Split "YYYY-MM-DD" into numbers
+    const [year, month, day] = e.target.value.split("-").map(Number);
+
+    // monthIndex is zero-based, so subtract 1:
+    const picked = new Date(year, month - 1, day);
+
+    // Now startOfWeek will correctly give the Monday of that week
+    const weekStart = startOfWeek(picked, { weekStartsOn: 1 });
+    const newWeek: ScheduleDay[] = Array.from({ length: 7 }, (_, i) => ({
+      date: addDays(weekStart, i),
+      employees: 0,
+    }));
+
+    setCurrentWeek(newWeek);
+  };
 
   // Initialize current week.
   useEffect(() => {
@@ -371,6 +411,13 @@ const Schedules = () => {
           if (data.position === "Manager") {
             // For Manager, force selected organization to be manager's own organization
             setSelectedOrganization(data.organizationId);
+            await fetchEmployeesByOrganization(data.organizationId);
+            await fetchAvailabilities(data.organizationId);
+            await fetchScheduledShifts(data.organizationId);
+          } else {
+            // Employees: lock them into their own org
+            setSelectedOrganization(data.organizationId);
+            // fetch only that org
             await fetchEmployeesByOrganization(data.organizationId);
             await fetchAvailabilities(data.organizationId);
             await fetchScheduledShifts(data.organizationId);
@@ -545,27 +592,41 @@ const Schedules = () => {
   };
 
   // Handler to update an existing shift.
-  const handleUpdateShift = async (updatedShift: { id: string; startTime: string; endTime: string }) => {
+  const handleUpdateShift = async (updatedShift: {
+    id: string;
+    startTime: string;
+    endTime: string;
+  }) => {
     const token = await getToken();
     // Adjust the endTime: if it's "00:00", change it to "24:00"
-    const adjustedEndTime = updatedShift.endTime === "00:00" ? "24:00" : updatedShift.endTime;
-  
+    const adjustedEndTime =
+      updatedShift.endTime === "00:00" ? "24:00" : updatedShift.endTime;
+
     try {
-      const response = await fetch(`http://localhost:8080/api/employees/scheduled-shifts/${updatedShift.id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          startTime: updatedShift.startTime,
-          endTime: adjustedEndTime,
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:8080/api/employees/scheduled-shifts/${updatedShift.id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            startTime: updatedShift.startTime,
+            endTime: adjustedEndTime,
+          }),
+        }
+      );
       if (response.ok) {
         setScheduledShifts((prev) =>
           prev.map((shift) =>
-            shift.id === updatedShift.id ? { ...shift, startTime: updatedShift.startTime, endTime: adjustedEndTime } : shift
+            shift.id === updatedShift.id
+              ? {
+                  ...shift,
+                  startTime: updatedShift.startTime,
+                  endTime: adjustedEndTime,
+                }
+              : shift
           )
         );
       } else {
@@ -580,13 +641,13 @@ const Schedules = () => {
     return <div>Loading...</div>;
   }
 
-// Filter employees to include only active ones.
-const activeEmployeesForOrg = employeesForOrg.filter(emp => emp.isActive);
+  // Filter employees to include only active ones.
+  const activeEmployeesForOrg = employeesForOrg.filter((emp) => emp.isActive);
 
-// Use active employees to filter scheduled shifts.
-const validScheduledShifts = scheduledShifts.filter((shift) =>
-  activeEmployeesForOrg.some((emp) => emp.id === shift.employeeId)
-);
+  // Use active employees to filter scheduled shifts.
+  const validScheduledShifts = scheduledShifts.filter((shift) =>
+    activeEmployeesForOrg.some((emp) => emp.id === shift.employeeId)
+  );
 
   // Compute the list of employees with at least one valid scheduled shift.
   const employeesWithShift = activeEmployeesForOrg.filter((employee) =>
@@ -633,12 +694,16 @@ const validScheduledShifts = scheduledShifts.filter((shift) =>
         >
           &lt;
         </button>
-        {currentWeek && (
-          <div className="flex bg-white items-center font-semibold border border-gray-200 px-4 py-1">
-            {format(currentWeek[0].date, "MMM dd, yyyy")} -
-            {format(currentWeek[6].date, "MMM dd, yyyy")}
-          </div>
-        )}
+        <div
+          className="flex bg-white items-center font-semibold border border-gray-200 px-4 py-1 cursor-pointer"
+          onClick={() => dateInputRef.current?.showPicker()}
+        >
+          {currentWeek &&
+            `${format(currentWeek[0].date, "MMM dd, yyyy")} – ${format(
+              currentWeek[6].date,
+              "MMM dd, yyyy"
+            )}`}
+        </div>
         <button
           className="border border-gray-200 bg-white px-2 py-1 hover:bg-gray-300"
           onClick={() => {
@@ -652,6 +717,16 @@ const validScheduledShifts = scheduledShifts.filter((shift) =>
         >
           &gt;
         </button>
+        {/* hidden native date picker */}
+        <input
+          ref={dateInputRef}
+          type="date"
+          className="absolute left-[50px] opacity-0 pointer-events-none"
+          defaultValue={
+            currentWeek ? format(currentWeek[0].date, "yyyy-MM-dd") : ""
+          }
+          onChange={handleDateChange}
+        />
       </div>
 
       <div className="mb-4">
@@ -659,12 +734,12 @@ const validScheduledShifts = scheduledShifts.filter((shift) =>
           value={selectedOrganization}
           onChange={handleOrganizationChange}
           className="p-2 border rounded"
-          disabled={userRole === "Manager"} // Disable dropdown for Manager
+          disabled={userRole !== "Admin"} // Disable dropdown for Manager
         >
           <option value="" disabled>
             Choose an organization
           </option>
-          {(userRole === "Manager"
+          {(userRole !== "Admin"
             ? organizations.filter((org) => org.id === userOrganizationId)
             : organizations
           ).map((org) => (
@@ -729,10 +804,16 @@ const validScheduledShifts = scheduledShifts.filter((shift) =>
                         return (
                           <td
                             key={day.date.toISOString()}
-                            className="bg-white border border-gray-300 px-4 py-2 cursor-pointer hover:bg-gray-100"
-                            onClick={() => handleOpenEditModal(assignedShift)}
-                          >
-                            {assignedShift.startTime} - {assignedShift.endTime}
+                            className={`text-sm text-center border border-gray-300 px-4 py-2 ${userRole === "Admin" || userRole === "Manager" ? "cursor-pointer hover:bg-gray-100" : ""}`}
+                            onClick={() => {
+                              if (userRole === "Admin" || userRole === "Manager") {
+                                handleOpenEditModal(assignedShift);
+                              }
+                            }}                          >
+                            {convertTo12Hour(assignedShift.startTime)} –{" "}
+                            {assignedShift.endTime === "24:00"
+                              ? "12:00 AM"
+                              : convertTo12Hour(assignedShift.endTime)}
                           </td>
                         );
                       } else {
@@ -759,18 +840,18 @@ const validScheduledShifts = scheduledShifts.filter((shift) =>
                         return (
                           <td
                             key={day.date.toISOString()}
-                            className={`bg-white border border-gray-300 px-4 py-2 ${
+                            className={`text-center border border-gray-300 px-4 py-2 ${userRole === "Admin" || userRole === "Manager" &&
                               hasAvailableSlot
                                 ? "cursor-pointer hover:bg-gray-100"
                                 : ""
                             }`}
                             onClick={() => {
-                              if (hasAvailableSlot)
+                              if ((userRole === "Admin" || userRole === "Manager") && hasAvailableSlot) {
                                 handleCellClick(day, employee);
-                            }}
+                            }}}
                           >
                             {hasAvailabilityForDate
-                              ? hasAvailableSlot
+                              ? userRole === "Admin" || userRole === "Manager" && hasAvailableSlot
                                 ? "Click to assign"
                                 : "No schedule"
                               : ""}
@@ -780,6 +861,7 @@ const validScheduledShifts = scheduledShifts.filter((shift) =>
                     })}
                   </tr>
                 ))}
+                {(userRole === "Admin" || userRole === "Manager") && (
                 <tr>
                   <td className="bg-white border border-gray-300 px-4 py-2 font-bold text-left">
                     <select
@@ -808,7 +890,7 @@ const validScheduledShifts = scheduledShifts.filter((shift) =>
                       className="bg-white border border-gray-300 px-4 py-2"
                     ></td>
                   ))}
-                </tr>
+                </tr>)}
               </tbody>
             </table>
           </div>

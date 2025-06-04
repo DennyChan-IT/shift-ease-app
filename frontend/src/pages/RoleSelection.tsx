@@ -21,9 +21,9 @@ export default function RoleSelection() {
   return (
     <div className="flex items-center justify-center h-screen bg-slate-100
     ">
-      <div className="text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-teal-500">
+      <div className="text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-black">
         <img src={logo} alt="App Logo" className="w-24 mx-auto mb-4" />
-        <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-teal-500 mb-2">
+        <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-black mb-2">
           Welcome to ShiftEase App
         </h2>
         <p className="text-gray-600 text-lg mb-4">
@@ -31,7 +31,7 @@ export default function RoleSelection() {
         </p>
         <select
           id="role"
-          className="w-full px-3 py-2 mb-4 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+          className="w-full px-3 py-2 mb-4 border border-black rounded focus:outline-none focus:ring-2 focus:ring-gray-400"
         >
           <option value="admin">I am an Admin</option>
           <option value="manager">I am a Manager</option>
@@ -39,7 +39,7 @@ export default function RoleSelection() {
         </select>
         <button
           onClick={goToSignInPage}
-          className="w-full py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-700 transition"
+          className="w-full py-2 bg-black text-white font-semibold rounded hover:bg-gray-800 transition"
         >
           Next
         </button>

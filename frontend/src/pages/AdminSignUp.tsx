@@ -84,9 +84,9 @@ export default function AdminSignUp() {
   if (verifying) {
     return (
       <div className="flex items-center justify-center h-screen bg-slate-100">
-        <div className="text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-teal-500">
+        <div className="text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-black">
           <img src={logo} alt="App Logo" className="w-24 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-4">Verify Email</h2>
+          <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-black mb-4">Verify Email</h2>
           {error && <p className="text-red-500">{error}</p>}
           <form onSubmit={handleVerify}>
             <label htmlFor="code">Enter Verification Code</label>
@@ -94,13 +94,13 @@ export default function AdminSignUp() {
               id="code"
               name="code"
               type="text"
-              className="w-full px-3 py-2 mb-4 border border-blue-500 rounded"
+              className="w-full px-3 py-2 mb-4 border border-black rounded"
               value={code}
               onChange={(e) => setCode(e.target.value)}
             />
             <button
               type="submit"
-              className="w-full py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-700 transition"
+              className="w-full py-2 bg-black text-white font-semibold rounded hover:bg-gray-800 transition"
             >
               Verify
             </button>
@@ -111,17 +111,17 @@ export default function AdminSignUp() {
   }
 
   return (
-    <div className="flex items-center justify-center h-screen bg-blue-100">
-      <div className="text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-teal-500">
+    <div className="flex items-center justify-center h-screen bg-slate-100">
+      <div className="text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-black">
         <img src={logo} alt="App Logo" className="w-24 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-blue-500 mb-4">Admin Sign-Up</h2>
+        <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-black mb-4">Admin Sign-Up</h2>
         {error && <p className="text-red-500">{error}</p>}
         <form onSubmit={handleSubmit}>
           <label htmlFor="email">Enter Email Address</label>
           <input
             id="email"
             type="email"
-            className="w-full px-3 py-2 mb-4 border border-blue-500 rounded"
+            className="w-full px-3 py-2 mb-4 border border-black rounded"
             value={emailAddress}
             onChange={(e) => setEmailAddress(e.target.value)}
           />
@@ -129,13 +129,13 @@ export default function AdminSignUp() {
           <input
             id="password"
             type="password"
-            className="w-full px-3 py-2 mb-4 border border-blue-500 rounded"
+            className="w-full px-3 py-2 mb-4 border border-black rounded"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
           <button
             type="submit"
-            className="w-full py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-700 transition"
+            className="w-full py-2 bg-black text-white font-semibold rounded hover:bg-gray-800 transition"
           >
             Continue
           </button>

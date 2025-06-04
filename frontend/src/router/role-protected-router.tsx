@@ -4,7 +4,7 @@ import { useAuth } from "@clerk/clerk-react";
 
 type RoleProtectedRouteProps = {
   children: JSX.Element;
-  allowedRoles: string[]; // List of roles allowed to access this route
+  allowedRoles: string[];
 };
 
 export default function RoleProtectedRoute({
@@ -15,40 +15,41 @@ export default function RoleProtectedRoute({
   const { getToken } = useAuth();
 
   useEffect(() => {
-    const fetchUserDetails = async () => {
+    const fetchUserRole = async () => {
       const token = await getToken();
       try {
-        const response = await fetch(
-          "http://localhost:8080/api/employees/logged-user",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setUserRole(data.position); // Set the user's role
+        const res = await fetch("http://localhost:8080/api/user-info", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (res.ok) {
+          const { position } = await res.json();
+          setUserRole(position);
         }
-      } catch (error) {
-        console.error("Error fetching user role:", error);
+      } catch (err) {
+        console.error("Error fetching user role:", err);
       }
     };
 
-    fetchUserDetails();
-  }, []);
+    fetchUserRole();
+  }, [getToken]);
 
   if (!userRole) {
-    return <p>Loading...</p>; // Show a loading state while fetching the role
+    return <p>Loading...</p>;
   }
 
-  // If the user role is not allowed, redirect to the dashboard or another page
+  // If they're not one of the allowedRoles...
   if (!allowedRoles.includes(userRole)) {
-    return <Navigate to="/dashboard/requests" />;
+    // ...but *are* a Manager, send them to their Requests tab
+    if (userRole === "Manager") {
+      return <Navigate to="/dashboard/requests" replace />;
+    }
+    // ...otherwise (employees, etc.) send them to Availability
+    return <Navigate to="/schedules" replace />;
   }
 
-  // Render the protected component if the user has the required role
+  // If their role *is* allowed, render the protected content
   return children;
 }

@@ -38,7 +38,7 @@ export function CreateOrganization() {
   };
 
   return (
-    <div className="pl-5 bg-white p-4 border rounded-lg shadow-md">
+    <div className="pl-5 w-full p-4 border rounded-lg shadow-md">
       <h3 className="text-lg font-bold mb-4">Organization Details</h3>
       <form onSubmit={handleSubmit}>
         <label className="block mb-2">Organization Name</label>

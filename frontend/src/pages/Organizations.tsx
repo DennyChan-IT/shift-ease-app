@@ -70,25 +70,23 @@ export default function Organizations() {
             key={org.id}
             className="relative bg-white p-6 border rounded-lg shadow-md hover:shadow-lg transition"
           >
-            {/* Edit & Delete buttons */}
             <div className="flex justify-between mb-2">
               <h3 className="text-lg font-semibold text-gray-800">
                 {org.name}
               </h3>
-              <div className="flex">
+              <div className="flex space-x-2">
                 <EditOrganization
                   organization={org}
                   onClose={fetchOrganizations}
                 />
                 <button
                   onClick={() => remove(org.id)}
-                  className="text-center text-red-500 hover:text-red-700"
+                  className="text-red-500 hover:text-red-700"
                 >
                   <FiTrash2 />
                 </button>
               </div>
             </div>
-
             <p className="text-gray-600 mb-4">
               📍 {org.location || "Location not specified"}
             </p>
@@ -96,14 +94,12 @@ export default function Organizations() {
               {employees.filter((e) => e.organizationId === org.id).length}{" "}
               employees
             </p>
-            <button>
-              <Link
-                to={`/organizations/${org.id}`}
-                className="bg-black text-white py-1 px-3 rounded hover:bg-gray-700 transition"
+            <Link
+              to={`/organizations/${org.id}`}
+              className="bg-black text-white py-1 px-3 rounded hover:bg-gray-700 transition"
               >
-                View Details
-              </Link>
-            </button>
+              View Details
+            </Link>
           </div>
         ))}
       </div>

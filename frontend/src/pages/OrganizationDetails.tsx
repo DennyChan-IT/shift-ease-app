@@ -15,6 +15,7 @@ export default function OrganizationDetails() {
     id: string;
     name: string;
   } | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   // Fetch organization + employees
   const fetchOrganizationDetails = async () => {
@@ -29,6 +30,24 @@ export default function OrganizationDetails() {
   };
   useEffect(() => {
     fetchOrganizationDetails();
+    const fetchRole = async () => {
+      const token = await getToken();
+      try {
+        const res = await fetch("http://localhost:8080/api/user-info", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (res.ok) {
+          const { position } = await res.json();
+          setUserRole(position);
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+    fetchRole();
   }, [id]);
 
   // Deactivate employee
@@ -85,14 +104,16 @@ export default function OrganizationDetails() {
   const inactiveEmps = organization.employees.filter((e) => !e.isActive);
 
   return (
-    <div className="w-full p-6">
-      <Link
-        to="/organizations"
-        className="text-gray-600 hover:text-gray-800 inline-flex items-center mb-6"
-      >
-        ← Back to Organizations
-      </Link>
-
+    <div className="w-full p-6 overflow-y-scroll">
+      {userRole !== "Manager" && (
+        <Link
+          to="/organizations"
+          className="text-gray-500 hover:text-black hover:underline inline-flex items-center mb-6"
+        >
+          ← Back to Organizations
+        </Link>
+      )}
+      
       <div className="flex justify-between items-center border p-6 rounded-lg shadow mb-6">
         <div>
           <h2 className="text-2xl font-bold">{organization.name}</h2>
@@ -126,9 +147,7 @@ export default function OrganizationDetails() {
           <button
             onClick={() => setShowActive(false)}
             className={`px-4 py-2 rounded-r-md ${
-              !showActive
-                ? "bg-white text-red-500 font-medium"
-                : "text-red-500"
+              !showActive ? "bg-white text-red-500 font-medium" : "text-red-500"
             }`}
           >
             Inactive Employees
