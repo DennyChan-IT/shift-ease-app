@@ -52,11 +52,4 @@ app.get("/api/user-info", async (req, res) => {
   }
 });
 
-app.get('/', (req: Request, res: Response) => {
-  res.send({
-    message: "Superbase Prisma server..."
-  });
-});
-
-
 export default app

@@ -340,7 +340,7 @@ const Schedules = () => {
   const [employeesForOrg, setEmployeesForOrg] = useState<EmployeeType[]>([]);
   // Holds employees manually added to the schedule (even if no shift yet)
   const [activeEmployees, setActiveEmployees] = useState<EmployeeType[]>([]);
-  const { organizations } = useOrganizations();
+  const { organizations, fetchOrganizations } = useOrganizations();
   const { getToken } = useAuth();
 
   const [availabilitiesByEmployee, setAvailabilitiesByEmployee] = useState<{
@@ -397,6 +397,10 @@ const Schedules = () => {
   useEffect(() => {
     const fetchUserDetails = async () => {
       const token = await getToken();
+
+      // 1) load all organizations up front
+      await fetchOrganizations();
+
       try {
         const response = await fetch("/api/user-info", {
           headers: {
@@ -436,15 +440,12 @@ const Schedules = () => {
   const fetchEmployeesByOrganization = async (orgId: string) => {
     const token = await getToken();
     try {
-      const response = await fetch(
-        `/api/employees?organizationId=${orgId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch(`/api/employees?organizationId=${orgId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
       if (response.ok) {
         const data: EmployeeType[] = await response.json();
         // Only include employees whose organizationId exactly matches the selected orgId.
@@ -459,15 +460,12 @@ const Schedules = () => {
 
   const fetchAvailabilities = async (orgId: string) => {
     const token = await getToken();
-    const response = await fetch(
-      "/api/employees/availabilities",
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch("/api/employees/availabilities", {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
     if (!response.ok) {
       console.error("Failed to fetch availabilities");
       return;
@@ -557,22 +555,19 @@ const Schedules = () => {
     const token = await getToken();
     const dateString = modalDate.toISOString();
     try {
-      const response = await fetch(
-        "/api/employees/scheduled-shifts",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            employeeId: modalEmployee.id,
-            date: dateString,
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-          }),
-        }
-      );
+      const response = await fetch("/api/employees/scheduled-shifts", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          employeeId: modalEmployee.id,
+          date: dateString,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+        }),
+      });
       if (response.ok) {
         console.log("Shift assigned successfully with custom times!");
         // Refresh scheduled shifts after assignment
@@ -731,7 +726,7 @@ const Schedules = () => {
 
       <div className="mb-4">
         <select
-          value={selectedOrganization}
+          value={selectedOrganization || ""}
           onChange={handleOrganizationChange}
           className="p-2 border rounded"
           disabled={userRole !== "Admin"} // Disable dropdown for Manager
@@ -804,12 +799,20 @@ const Schedules = () => {
                         return (
                           <td
                             key={day.date.toISOString()}
-                            className={`text-sm text-center border border-gray-300 px-4 py-2 ${userRole === "Admin" || userRole === "Manager" ? "cursor-pointer hover:bg-gray-100" : ""}`}
+                            className={`text-sm text-center border border-gray-300 px-4 py-2 ${
+                              userRole === "Admin" || userRole === "Manager"
+                                ? "cursor-pointer hover:bg-gray-100"
+                                : ""
+                            }`}
                             onClick={() => {
-                              if (userRole === "Admin" || userRole === "Manager") {
+                              if (
+                                userRole === "Admin" ||
+                                userRole === "Manager"
+                              ) {
                                 handleOpenEditModal(assignedShift);
                               }
-                            }}                          >
+                            }}
+                          >
                             {convertTo12Hour(assignedShift.startTime)} –{" "}
                             {assignedShift.endTime === "24:00"
                               ? "12:00 AM"
@@ -840,18 +843,25 @@ const Schedules = () => {
                         return (
                           <td
                             key={day.date.toISOString()}
-                            className={`text-center border border-gray-300 px-4 py-2 ${userRole === "Admin" || userRole === "Manager" &&
-                              hasAvailableSlot
+                            className={`text-center border border-gray-300 px-4 py-2 ${
+                              userRole === "Admin" ||
+                              (userRole === "Manager" && hasAvailableSlot)
                                 ? "cursor-pointer hover:bg-gray-100"
                                 : ""
                             }`}
                             onClick={() => {
-                              if ((userRole === "Admin" || userRole === "Manager") && hasAvailableSlot) {
+                              if (
+                                (userRole === "Admin" ||
+                                  userRole === "Manager") &&
+                                hasAvailableSlot
+                              ) {
                                 handleCellClick(day, employee);
-                            }}}
+                              }
+                            }}
                           >
                             {hasAvailabilityForDate
-                              ? userRole === "Admin" || userRole === "Manager" && hasAvailableSlot
+                              ? userRole === "Admin" ||
+                                (userRole === "Manager" && hasAvailableSlot)
                                 ? "Click to assign"
                                 : "No schedule"
                               : ""}
@@ -862,35 +872,36 @@ const Schedules = () => {
                   </tr>
                 ))}
                 {(userRole === "Admin" || userRole === "Manager") && (
-                <tr>
-                  <td className="bg-white border border-gray-300 px-4 py-2 font-bold text-left">
-                    <select
-                      className="p-2 border rounded"
-                      onChange={(e) => {
-                        const selectedEmp = uniqueAvailableEmployees.find(
-                          (emp) => emp.id === e.target.value
-                        );
-                        if (selectedEmp) handleAddEmployee(selectedEmp);
-                      }}
-                      defaultValue=""
-                    >
-                      <option value="" disabled>
-                        Add Employee
-                      </option>
-                      {uniqueAvailableEmployees.map((employee) => (
-                        <option key={employee.id} value={employee.id}>
-                          {employee.name}
+                  <tr>
+                    <td className="bg-white border border-gray-300 px-4 py-2 font-bold text-left">
+                      <select
+                        className="p-2 border rounded"
+                        onChange={(e) => {
+                          const selectedEmp = uniqueAvailableEmployees.find(
+                            (emp) => emp.id === e.target.value
+                          );
+                          if (selectedEmp) handleAddEmployee(selectedEmp);
+                        }}
+                        defaultValue=""
+                      >
+                        <option value="" disabled>
+                          Add Employee
                         </option>
-                      ))}
-                    </select>
-                  </td>
-                  {currentWeek.map((day) => (
-                    <td
-                      key={day.date.toISOString()}
-                      className="bg-white border border-gray-300 px-4 py-2"
-                    ></td>
-                  ))}
-                </tr>)}
+                        {uniqueAvailableEmployees.map((employee) => (
+                          <option key={employee.id} value={employee.id}>
+                            {employee.name}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    {currentWeek.map((day) => (
+                      <td
+                        key={day.date.toISOString()}
+                        className="bg-white border border-gray-300 px-4 py-2"
+                      ></td>
+                    ))}
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
