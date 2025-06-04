@@ -63,7 +63,7 @@ const EmployeeSignUp: React.FC = () => {
         <p className="text-[14px] mb-4">
           Let's create your account so you can start seeing your schedule
         </p>
-        <h2 className="text-[18px] text-left text-[14px] mb-0">Password</h2>
+        <h2 className="text-left text-[14px] mb-0">Password</h2>
         <form id="sign-up-form">
           <input
             name="password"

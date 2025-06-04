@@ -21,58 +21,76 @@ export function AddNewEmployee({ organizationId, onAdd }: AddNewEmployeeProps) {
     e.preventDefault();
     const token = await getToken();
 
-    // Check for existing employee by email
-    const checkResp = await fetch(
-      "/api/employees/by-email",
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      }
-    );
+    // 1) Check for existing employee
+    const checkResp = await fetch("/api/employees/by-email", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
     const check = await checkResp.json();
 
-    // If email exists and is active, alert and stop
     if (check.exists && check.isActive) {
-      alert("An employee with this email already exists. Please use a different email or update the existing employee's information.");
+      alert(
+        "An employee with this email already exists. Please use a different email or update the existing employee's information."
+      );
       return;
     }
 
-    // If exists but inactive, reactivate
     if (check.exists && !check.isActive) {
-      const reactResp = await fetch(
-        "/api/employees/reactivate",
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
+      const reactResp = await fetch("/api/employees/reactivate", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
       const { employee } = await reactResp.json();
       onAdd(employee);
       closeModal();
       return;
     }
 
-    // Normal add
+    // 2) Create the new employee
     const resp = await fetch("/api/employees", {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ name, email, position, organizationId }),
     });
     const result = await resp.json();
+
     if (resp.ok) {
+      // If it went to pending approval
       if (result.request) {
         alert("Request submitted for admin approval.");
       } else {
         onAdd(result);
-        // send invitation
+
+        // 3) Send Clerk invitation to the right sign-up page
+        const signupPath =
+          position.toLowerCase() === "manager"
+            ? "/manager-signup"
+            : "/employee-signup";
+
         await fetch("/api/invitations", {
           method: "POST",
-          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ emailAddress: email }),
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            emailAddress: email,
+            signupPath,
+          }),
         });
       }
+
       closeModal();
     }
   };

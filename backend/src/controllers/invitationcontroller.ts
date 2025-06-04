@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { clerkClient } from "../server";
 
 export const createInvitation = async (req: Request, res: Response) => {
-  const { emailAddress, redirectUrl } = req.body;
+  const { emailAddress, signupPath  } = req.body;
 
   const getBaseUrl = () => {
     if (process.env.VERCEL_URL) {
@@ -13,13 +13,12 @@ export const createInvitation = async (req: Request, res: Response) => {
 
   // build the absolute fallback URL
   const base = getBaseUrl();
-  const signUpPath = "/employee-signup";
-  const defaultRedirect = `${base}${signUpPath}`;
+  const redirectUrl = `${base}${signupPath}`;
 
   try {
     const invitation = await clerkClient.invitations.createInvitation({
       emailAddress,
-      redirectUrl: redirectUrl || defaultRedirect,
+      redirectUrl,
     });
     res.status(200).json({ success: true, invitation });
   } catch (error) {

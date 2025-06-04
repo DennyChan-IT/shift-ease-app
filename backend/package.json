@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsnd --inspect -- src/server.ts",
+    "dev": "tsnd --inspect -- src/index.ts",
     "db:studio": "prisma studio",
     "build": "tsc",
     "vercel-build": "prisma generate"
