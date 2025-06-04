@@ -14,6 +14,24 @@ export default function AdminSignIn() {
     if (!isLoaded) return;
 
     try {
+      // 1) Look up the role by email
+      const roleResp = await fetch("/api/public/check-role", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (!roleResp.ok) {
+        alert("No account found for that email.");
+        return;
+      }
+
+      const { role } = await roleResp.json();
+      if (role !== "Admin") {
+        alert("You don’t have Admin access.");
+        return;
+      }
+
       const signInAttempt = await signIn.create({
         identifier: email,
         password,
@@ -37,7 +55,8 @@ export default function AdminSignIn() {
       <div className="text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-black">
         <img src={logo} alt="App Logo" className="w-24 mx-auto mb-4" />
         <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-black mb-4">
-          Admin Sign-In</h2>
+          Admin Sign-In
+        </h2>
         {error && <p className="text-red-500">{error}</p>}
         <input
           type="email"
