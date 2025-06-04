@@ -427,6 +427,17 @@ export const updateScheduledShift = async (req: Request, res: Response) => {
   }
 };
 
+export const deleteScheduledShift = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    await prisma.scheduledShift.delete({ where: { id } });
+    res.status(200).json({ message: "Shift deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting scheduled shift:", error);
+    res.status(500).json({ error: "Failed to delete shift" });
+  }
+};
+
 export const getScheduledShiftsByOrganization = async (
   req: Request,
   res: Response

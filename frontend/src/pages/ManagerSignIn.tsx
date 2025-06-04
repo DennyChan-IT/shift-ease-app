@@ -3,7 +3,7 @@ import { useSignIn } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 
-export default function EmployeeSignIn() {
+export default function ManagerSignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null); // Error state now allows string or null
@@ -14,29 +14,23 @@ export default function EmployeeSignIn() {
     if (!isLoaded) return;
 
     try {
+      // 1) Look up the role by email
       const roleResp = await fetch("/api/public/check-role", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+
       if (!roleResp.ok) {
-        alert(
-          "Your email address has not been registered in our system. Please contact your employer or system administrator to request access."
-        );
+        alert("Your email address has not been registered in our system. Please contact your employer or system administrator to request access.");
         return;
       }
+
       const { role } = await roleResp.json();
-
-      // disallow Admins & Managers here:
-      if (role === "Admin" || role === "Manager") {
-        alert(
-          `Your account is ${
-            role === "Admin" ? "an Admin" : `a ${role}`
-          }. Please use the ${role} sign-in page.`
-        );
+      if (role !== "Manager") {
+        alert("You don’t have Admin access.");
         return;
       }
-
       const signInAttempt = await signIn.create({
         identifier: email,
         password,
@@ -44,7 +38,7 @@ export default function EmployeeSignIn() {
 
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId as string });
-        navigate("/schedules"); // Redirect to the desired page
+        navigate("/dashboard"); // Redirect to the desired page
       } else {
         setError(
           "Sign-in attempt is incomplete. Please check your credentials."
@@ -60,7 +54,7 @@ export default function EmployeeSignIn() {
       <div className="text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-black">
         <img src={logo} alt="App Logo" className="w-24 mx-auto mb-4" />
         <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-black mb-4">
-          Employee Sign-In
+          Manager Sign-In
         </h2>
         {error && <p className="text-red-500">{error}</p>}
         <input

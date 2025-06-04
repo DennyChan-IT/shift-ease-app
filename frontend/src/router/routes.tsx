@@ -16,6 +16,8 @@ import { Availability } from "../pages/Availability";
 import AddAvailability from "../pages/AddAvailability";
 import EmployeeSignUp from "../pages/EmployeeSignUp";
 import EmployeeSignIn from "../pages/EmployeeSignIn";
+import ManagerSignUp from "../pages/ManagerSignUp";
+import ManagerSignIn from "../pages/ManagerSignIn";
 
 export const router = createBrowserRouter([
   {
@@ -32,6 +34,12 @@ export const router = createBrowserRouter([
       {
         path: "/admin-signup",
         element: <AdminSignUp />,
+      },{
+        path: "/manager-signup",
+        element: <ManagerSignUp />,
+      },{
+        path: "/manager-signin",
+        element: <ManagerSignIn />,
       },
       {
         path: "/employee-signup",

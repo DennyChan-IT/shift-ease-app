@@ -241,6 +241,7 @@ type EditShiftModalProps = {
     startTime: string;
     endTime: string;
   }) => void;
+  onDelete: (shiftId: string) => void;
 };
 
 function EditShiftModal({
@@ -248,6 +249,7 @@ function EditShiftModal({
   shift,
   onClose,
   onUpdate,
+  onDelete,
 }: EditShiftModalProps) {
   const [startTime, setStartTime] = useState(shift ? shift.startTime : "");
   const [endTime, setEndTime] = useState(shift ? shift.endTime : "");
@@ -312,20 +314,32 @@ function EditShiftModal({
               className="border p-2 rounded"
             />
           </div>
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-between items-center">
             <button
               type="button"
-              onClick={onClose}
-              className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+              onClick={() => {
+                if (shift) onDelete(shift.id);
+                onClose();
+              }}
+              className="text-red-500 underline  hover:bg-gray-300 px-4 py-2 rounded-md"
             >
-              Cancel
+              Delete
             </button>
-            <button
-              type="submit"
-              className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
-            >
-              Save Shift
-            </button>
+            <div className="space-x-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
+              >
+                Save Shift
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -632,6 +646,24 @@ const Schedules = () => {
     }
   };
 
+  const handleDeleteShift = async (shiftId: string) => {
+    const token = await getToken();
+    try {
+      const res = await fetch(`/api/employees/scheduled-shifts/${shiftId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (res.ok) {
+        setScheduledShifts((prev) => prev.filter((s) => s.id !== shiftId));
+      }
+    } catch (err) {
+      console.error("Failed to delete shift", err);
+    }
+  };
+
   if (!currentWeek) {
     return <div>Loading...</div>;
   }
@@ -926,6 +958,7 @@ const Schedules = () => {
         shift={shiftToEdit}
         onClose={() => setIsEditModalOpen(false)}
         onUpdate={handleUpdateShift}
+        onDelete={handleDeleteShift}
       />
     </div>
   );
