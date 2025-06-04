@@ -38,6 +38,21 @@ export const createOrganization = async (req: Request, res: Response) => {
   res.status(201).json(newOrganization);
 };
 
+export const updateOrganization = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { name, location } = req.body;
+  try {
+    const updated = await prisma.organization.update({
+      where: { id },
+      data: { name, location },
+    });
+    res.json(updated);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to update organization" });
+  }
+};
+
 export const deleteOrganization = async (req: Request, res: Response) => {
   const { id } = req.params;
   try {

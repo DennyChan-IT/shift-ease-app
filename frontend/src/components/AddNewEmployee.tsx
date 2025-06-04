@@ -1,6 +1,8 @@
+import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { useAuth } from "@clerk/clerk-react";
-import React, { useRef, useState } from "react";
 import { EmployeeType } from "../types/Employee";
+import { FiUserPlus } from "react-icons/fi";
 
 type AddNewEmployeeProps = {
   organizationId?: string;
@@ -8,119 +10,68 @@ type AddNewEmployeeProps = {
 };
 
 export function AddNewEmployee({ organizationId, onAdd }: AddNewEmployeeProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
-
+  const { getToken } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [position, setPosition] = useState("");
-  const { getToken } = useAuth();
-
-  const openModal = () => {
-    dialogRef.current?.showModal();
-  };
-
-  const closeModal = () => {
-    dialogRef.current?.close();
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = await getToken();
 
-    // Optionally, check if the employee already exists (by email)
-    const checkResponse = await fetch("http://localhost:8080/api/employees/by-email", {
+    // Check for inactive
+    const checkRes = await fetch("http://localhost:8080/api/employees/by-email", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
-    const checkResult = await checkResponse.json();
-    
-    if (checkResult && checkResult.exists && !checkResult.isActive) {
-      // Reactivate the employee if they exist but are deactivated
-      const reactivateResponse = await fetch("http://localhost:8080/api/employees/reactivate", {
+    const check = await checkRes.json();
+    if (check.exists && !check.isActive) {
+      const reactRes = await fetch("http://localhost:8080/api/employees/reactivate", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      const result = await reactivateResponse.json();
-      if (reactivateResponse.ok) {
-        alert("Employee reactivated successfully");
-        onAdd(result.employee);
-        closeModal();
-        return;
-      } else {
-        alert("Failed to reactivate employee");
-        return;
-      }
+      const { employee } = await reactRes.json();
+      onAdd(employee);
+      setIsOpen(false);
+      return;
     }
-    
-    // Proceed with normal employee creation logic if no inactive employee exists
-    try {
-      const response = await fetch("http://localhost:8080/api/employees", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, email, position, organizationId }),
-      });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        if (result.request) {
-          // Pending request logic for managers
-          alert("Your request has been submitted for admin approval. No invitation will be sent until approved.");
-        } else {
-          // Directly added employee logic for non-managers
-          console.log("Employee added successfully!");
-          onAdd(result);
-
-          // Send invitation
-          const invitationResponse = await fetch("http://localhost:8080/api/invitations", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ emailAddress: email }),
-          });
-
-          const invitationData = await invitationResponse.json();
-          if (invitationResponse.ok && invitationData.success) {
-            console.log(`Invitation created successfully! ID: ${invitationData.invitation.id}`);
-          } else {
-            console.error("Failed to create invitation.");
-          }
-        }
-        closeModal();
+    // Create new
+    const newRes = await fetch("http://localhost:8080/api/employees", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, position, organizationId }),
+    });
+    const result = await newRes.json();
+    if (newRes.ok) {
+      if (!result.request) {
+        onAdd(result);
+        // invitation
+        await fetch("http://localhost:8080/api/invitations", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ emailAddress: email }),
+        });
       } else {
-        console.error("Failed to add employee");
+        alert("Request submitted for approval.");
       }
-    } catch (error) {
-      console.error("Error adding employee:", error);
+      setIsOpen(false);
+    } else {
+      console.error("Failed to add employee", result);
     }
   };
 
-  return (
-    <>
-      <button
-        onClick={openModal}
-        className="bg-black text-white py-2 px-4 rounded hover:bg-gray-700 transition"
-      >
-        + Add New Employee
-      </button>
-
-      <dialog
-        ref={dialogRef}
-        className="rounded-lg w-96 p-6 bg-white shadow-lg text-left"
-      >
+  // Modal markup
+  const modal = (
+    <div className="fixed inset-0 flex items-center justify-center z-[100]">
+      <div
+        className="absolute inset-0 bg-black opacity-50"
+        onClick={() => setIsOpen(false)}
+      />
+      <div className="relative bg-white rounded-lg shadow-lg w-96 p-6 z-10">
         <h2 className="text-xl font-semibold mb-4">Add New Employee</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -156,20 +107,32 @@ export function AddNewEmployee({ organizationId, onAdd }: AddNewEmployeeProps) {
           <div className="flex justify-end space-x-4">
             <button
               type="button"
-              onClick={closeModal}
-              className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+              onClick={() => setIsOpen(false)}
+              className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-200"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
             >
               Add Employee
             </button>
           </div>
         </form>
-      </dialog>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <button
+        onClick={() => setIsOpen(true)}
+        className="flex items-center bg-black text-white py-2 px-4 rounded hover:bg-gray-800"
+      >
+        <FiUserPlus className="mr-2" /> Add New Employee
+      </button>
+      {isOpen && createPortal(modal, document.body)}
     </>
   );
 }

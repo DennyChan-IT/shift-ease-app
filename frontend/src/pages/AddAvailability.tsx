@@ -69,16 +69,59 @@ export default function AddAvailability() {
 
   // Default availability (for new entries)
   const defaultAvailability: AvailabilityDay[] = [
-    { day: "Monday", allDay: true, available: false, startTime: "09:00", endTime: "23:00" },
-    { day: "Tuesday", allDay: true, available: false, startTime: "09:00", endTime: "23:00" },
-    { day: "Wednesday", allDay: true, available: false, startTime: "09:00", endTime: "23:00" },
-    { day: "Thursday", allDay: true, available: false, startTime: "09:00", endTime: "23:00" },
-    { day: "Friday", allDay: true, available: false, startTime: "09:00", endTime: "24:00" },
-    { day: "Saturday", allDay: true, available: false, startTime: "09:00", endTime: "24:00" },
-    { day: "Sunday", allDay: true, available: false, startTime: "09:00", endTime: "23:00" },
+    {
+      day: "Monday",
+      allDay: true,
+      available: false,
+      startTime: "09:00",
+      endTime: "23:00",
+    },
+    {
+      day: "Tuesday",
+      allDay: true,
+      available: false,
+      startTime: "09:00",
+      endTime: "23:00",
+    },
+    {
+      day: "Wednesday",
+      allDay: true,
+      available: false,
+      startTime: "09:00",
+      endTime: "23:00",
+    },
+    {
+      day: "Thursday",
+      allDay: true,
+      available: false,
+      startTime: "09:00",
+      endTime: "23:00",
+    },
+    {
+      day: "Friday",
+      allDay: true,
+      available: false,
+      startTime: "09:00",
+      endTime: "24:00",
+    },
+    {
+      day: "Saturday",
+      allDay: true,
+      available: false,
+      startTime: "09:00",
+      endTime: "24:00",
+    },
+    {
+      day: "Sunday",
+      allDay: true,
+      available: false,
+      startTime: "09:00",
+      endTime: "23:00",
+    },
   ];
 
-  const [availability, setAvailability] = useState<AvailabilityDay[]>(defaultAvailability);
+  const [availability, setAvailability] =
+    useState<AvailabilityDay[]>(defaultAvailability);
 
   // Fetch user details and set up data based on role
   useEffect(() => {
@@ -143,12 +186,15 @@ export default function AddAvailability() {
   const fetchEmployeesByOrganization = async (orgId: string) => {
     const token = await getToken();
     try {
-      const response = await fetch(`http://localhost:8080/api/employees?organizationId=${orgId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await fetch(
+        `http://localhost:8080/api/employees?organizationId=${orgId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (response.ok) {
         const data = await response.json();
         setEmployees(data);
@@ -173,7 +219,9 @@ export default function AddAvailability() {
   };
 
   // Handle organization selection (for Admin)
-  const handleOrganizationChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleOrganizationChange = async (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     const orgId = e.target.value;
     setSelectedOrganization(orgId);
     await fetchEmployeesByOrganization(orgId);
@@ -199,7 +247,9 @@ export default function AddAvailability() {
 
             // Set the effective dates (subtract one day from effectiveEnd for display)
             setEffectiveStartDate(formatDateUTC(new Date(data.effectiveStart)));
-            setEffectiveEndDate(formatDateUTC(addDays(new Date(data.effectiveEnd), -1)));
+            setEffectiveEndDate(
+              formatDateUTC(addDays(new Date(data.effectiveEnd), -1))
+            );
 
             // Pre-select organization and employee using data from the backend
             fetchEmployeesByOrganization(data.employee.organizationId);
@@ -208,8 +258,11 @@ export default function AddAvailability() {
 
             // Map the fetched DailyAvailabilitySlot array to update availability state
             const updatedAvailability = defaultAvailability.map((dayItem) => {
-              const slots: DailyAvailabilitySlot[] = data.DailyAvailabilitySlot || [];
-              const fetchedSlot = slots.find((slot) => slot.day === dayItem.day);
+              const slots: DailyAvailabilitySlot[] =
+                data.DailyAvailabilitySlot || [];
+              const fetchedSlot = slots.find(
+                (slot) => slot.day === dayItem.day
+              );
               if (fetchedSlot) {
                 return {
                   day: dayItem.day,
@@ -237,15 +290,18 @@ export default function AddAvailability() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = await getToken();
-  
+
     // --- Check for duplicate week availability ---
     try {
-      const res = await fetch("http://localhost:8080/api/employees/availabilities", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const res = await fetch(
+        "http://localhost:8080/api/employees/availabilities",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       if (res.ok) {
         const existingAvailabilities = await res.json();
         // Filter availabilities for the selected employee
@@ -263,7 +319,9 @@ export default function AddAvailability() {
           return existingWeekStart === newWeekStart;
         });
         if (duplicate) {
-          alert("This employee already has availability set for the selected week.");
+          alert(
+            "This employee already has availability set for the selected week."
+          );
           return; // Stop submission if a duplicate is found
         }
       } else {
@@ -273,7 +331,7 @@ export default function AddAvailability() {
       console.error("Error checking existing availabilities:", error);
     }
     // ---------------------------------------------
-  
+
     // Adjust the effective end date and convert to ISO string
     const adjustedEffectiveEnd = addDays(new Date(effectiveEndDate), 1);
     const payload = {
@@ -299,7 +357,11 @@ export default function AddAvailability() {
       });
 
       if (response.ok) {
-        alert(id ? "Availability updated successfully!" : "Availability added successfully!");
+        alert(
+          id
+            ? "Availability updated successfully!"
+            : "Availability added successfully!"
+        );
         navigate("/availability");
       } else {
         alert("Failed to save availability.");
@@ -311,7 +373,9 @@ export default function AddAvailability() {
 
   return (
     <div className="flex-1 w-full p-6">
-      <h2 className="text-xl font-bold mb-4">{id ? "Edit Availability" : "Add Availability"}</h2>
+      <h2 className="text-xl font-bold mb-4">
+        {id ? "Edit Availability" : "Add Availability"}
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         {userRole === "Admin" && (
           <label className="block">
@@ -321,7 +385,7 @@ export default function AddAvailability() {
               onChange={handleOrganizationChange}
               className="w-full p-2 border rounded"
               required
-              disabled={isEditing}  // Disabled when editing
+              disabled={isEditing} // Disabled when editing
             >
               <option value="" disabled>
                 Choose an organization
@@ -334,8 +398,8 @@ export default function AddAvailability() {
             </select>
           </label>
         )}
-
-        {((userRole === "Admin" && selectedOrganization) || userRole === "Manager") && (
+        {((userRole === "Admin" && selectedOrganization) ||
+          userRole === "Manager") && (
           <label className="block">
             <span className="font-semibold">Select Employee</span>
             <select
@@ -343,7 +407,7 @@ export default function AddAvailability() {
               onChange={(e) => setSelectedEmployee(e.target.value)}
               className="w-full p-2 border rounded"
               required
-              disabled={isEditing}  // Disabled when editing
+              disabled={isEditing} // Disabled when editing
             >
               <option value="" disabled>
                 Choose an employee
@@ -362,13 +426,11 @@ export default function AddAvailability() {
             </select>
           </label>
         )}
-
         {userRole && userRole !== "Admin" && userRole !== "Manager" && (
           <p>
             Adding availability for: <strong>Yourself</strong>
           </p>
         )}
-
         <label className="block">
           <span className="font-semibold">Effective Dates</span>
           <div className="flex space-x-2">
@@ -388,7 +450,6 @@ export default function AddAvailability() {
             />
           </div>
         </label>
-
         <div className="p-4 border rounded-lg shadow space-y-4">
           {availability.map((day, dayIndex) => (
             <div key={day.day}>
@@ -402,7 +463,9 @@ export default function AddAvailability() {
                     onChange={(e) => {
                       setAvailability((prev) =>
                         prev.map((d, i) =>
-                          i === dayIndex ? { ...d, available: e.target.checked } : d
+                          i === dayIndex
+                            ? { ...d, available: e.target.checked }
+                            : d
                         )
                       );
                     }}
@@ -418,7 +481,11 @@ export default function AddAvailability() {
                       setAvailability((prev) =>
                         prev.map((d, i) =>
                           i === dayIndex
-                            ? { ...d, allDay: isAllDay, available: isAllDay ? true : d.available }
+                            ? {
+                                ...d,
+                                allDay: isAllDay,
+                                available: isAllDay ? true : d.available,
+                              }
                             : d
                         )
                       );
@@ -434,7 +501,9 @@ export default function AddAvailability() {
                       onChange={(e) =>
                         setAvailability((prev) =>
                           prev.map((d, i) =>
-                            i === dayIndex ? { ...d, startTime: e.target.value } : d
+                            i === dayIndex
+                              ? { ...d, startTime: e.target.value }
+                              : d
                           )
                         )
                       }
@@ -446,7 +515,9 @@ export default function AddAvailability() {
                       onChange={(e) =>
                         setAvailability((prev) =>
                           prev.map((d, i) =>
-                            i === dayIndex ? { ...d, endTime: e.target.value } : d
+                            i === dayIndex
+                              ? { ...d, endTime: e.target.value }
+                              : d
                           )
                         )
                       }
@@ -458,13 +529,21 @@ export default function AddAvailability() {
             </div>
           ))}
         </div>
-
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Save
-        </button>
+        <div className="flex space-x-4 justify-end">
+          <button
+            type="submit"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Save
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate("/availability")}
+            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+          >
+            Cancel
+          </button>
+        </div>
       </form>
     </div>
   );

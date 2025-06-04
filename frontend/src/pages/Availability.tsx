@@ -77,11 +77,11 @@ export function Availability() {
   };
 
   return (
-    <div className="w-full p-6 bg-gray-100">
+    <div className="w-full p-6">
       <div className="flex justify-between mb-4">
         <h2 className="text-xl font-bold">Availability</h2>
         <Link to="/add-availability">
-          <button className="bg-blue-500 text-white px-4 py-2 rounded">
+          <button className="bg-black text-white px-4 py-2 rounded">
             + Add Availability
           </button>
         </Link>

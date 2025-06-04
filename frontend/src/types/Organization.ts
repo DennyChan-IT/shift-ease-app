@@ -7,5 +7,6 @@ export type OrganizationType = {
       name: string;
       email: string;
       position: string;
+      isActive: boolean;
     }[];
 }

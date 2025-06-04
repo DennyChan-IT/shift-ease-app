@@ -87,7 +87,9 @@ export function Dashboard() {
           </div>
           <div className="border shadow-md rounded-lg p-4 text-center w-1/3">
             <p className="text-gray-600">Total Employees</p>
-            <h3 className="text-2xl font-bold">{employees.length}</h3>
+            <h3 className="text-2xl font-bold">
+              {employees.filter((emp) => emp.position !== "Admin").length}
+            </h3>
           </div>
           <div className="border shadow-md rounded-lg p-4 text-center w-1/3">
             <p className="text-gray-600">Pending Requests</p>
@@ -140,7 +142,9 @@ export function Dashboard() {
       <div className="flex justify-around p-6 space-x-4">
         <div className="border shadow-md rounded-lg p-4 text-center w-1/2">
           <p className="text-gray-600">Total Employees</p>
-          <h3 className="text-2xl font-bold">{employees.length}</h3>
+          <h3 className="text-2xl font-bold">
+            {employees.filter((emp) => emp.position !== "Admin").length}
+          </h3>
         </div>
         <div className="border shadow-md rounded-lg p-4 text-center w-1/2">
           <p className="text-gray-600">Pending Requests</p>
