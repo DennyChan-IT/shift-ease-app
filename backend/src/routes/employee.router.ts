@@ -11,8 +11,10 @@ import {
   getAllPendingRequest,
   getAvailabilityByOrganization,
   getEachAvailabilities,
+  getEmployeeByEmail,
   getScheduledShiftsByOrganization,
   loggedUser,
+  reactivateEmployee,
   rejectRequest,
   updateAvailability,
   updateEmployee,
@@ -24,6 +26,8 @@ export const router = Router();
 router.get("/", getAllEmployees);
 router.get("/logged-user", loggedUser);
 router.post("/", addEmployee);
+router.post("/by-email", getEmployeeByEmail);
+router.post("/reactivate", reactivateEmployee);
 router.put("/:id", updateEmployee);
 router.delete("/:id", deleteEmployee);
 

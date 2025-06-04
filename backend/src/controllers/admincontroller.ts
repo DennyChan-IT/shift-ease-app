@@ -4,11 +4,16 @@ import { Request, Response } from "express";
 const prisma = new PrismaClient();
 
 export const addAdmin = async (req: Request, res: Response) => {
-  const { email, name, position, organizationId } = req.body;
+  const { email, name, position } = req.body;
 
   try {
     const admin = await prisma.employee.create({
-      data: { name, email, position, organizationId },
+      data: {
+        name,
+        email: email.toLowerCase(),
+        position,
+        organizationId: null, // Explicitly assign null
+      },
     });
 
     res.status(201).json(admin);

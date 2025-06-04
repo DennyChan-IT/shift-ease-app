@@ -7,7 +7,7 @@ type AddNewEmployeeProps = {
   onAdd: (newEmployee: EmployeeType) => void;
 };
 
-export function AddNewEmployee({ organizationId, onAdd  }: AddNewEmployeeProps) {
+export function AddNewEmployee({ organizationId, onAdd }: AddNewEmployeeProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const [name, setName] = useState("");
@@ -26,7 +26,41 @@ export function AddNewEmployee({ organizationId, onAdd  }: AddNewEmployeeProps) 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = await getToken();
-  
+
+    // Optionally, check if the employee already exists (by email)
+    const checkResponse = await fetch("http://localhost:8080/api/employees/by-email", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
+    const checkResult = await checkResponse.json();
+    
+    if (checkResult && checkResult.exists && !checkResult.isActive) {
+      // Reactivate the employee if they exist but are deactivated
+      const reactivateResponse = await fetch("http://localhost:8080/api/employees/reactivate", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+      const result = await reactivateResponse.json();
+      if (reactivateResponse.ok) {
+        alert("Employee reactivated successfully");
+        onAdd(result.employee);
+        closeModal();
+        return;
+      } else {
+        alert("Failed to reactivate employee");
+        return;
+      }
+    }
+    
+    // Proceed with normal employee creation logic if no inactive employee exists
     try {
       const response = await fetch("http://localhost:8080/api/employees", {
         method: "POST",
@@ -36,9 +70,9 @@ export function AddNewEmployee({ organizationId, onAdd  }: AddNewEmployeeProps) 
         },
         body: JSON.stringify({ name, email, position, organizationId }),
       });
-  
+
       const result = await response.json();
-  
+
       if (response.ok) {
         if (result.request) {
           // Pending request logic for managers
@@ -47,20 +81,17 @@ export function AddNewEmployee({ organizationId, onAdd  }: AddNewEmployeeProps) 
           // Directly added employee logic for non-managers
           console.log("Employee added successfully!");
           onAdd(result);
-  
+
           // Send invitation
-          const invitationResponse = await fetch(
-            "http://localhost:8080/api/invitations",
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ emailAddress: email }),
-            }
-          );
-  
+          const invitationResponse = await fetch("http://localhost:8080/api/invitations", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ emailAddress: email }),
+          });
+
           const invitationData = await invitationResponse.json();
           if (invitationResponse.ok && invitationData.success) {
             console.log(`Invitation created successfully! ID: ${invitationData.invitation.id}`);
@@ -68,7 +99,6 @@ export function AddNewEmployee({ organizationId, onAdd  }: AddNewEmployeeProps) 
             console.error("Failed to create invitation.");
           }
         }
-  
         closeModal();
       } else {
         console.error("Failed to add employee");
@@ -77,8 +107,6 @@ export function AddNewEmployee({ organizationId, onAdd  }: AddNewEmployeeProps) 
       console.error("Error adding employee:", error);
     }
   };
-  
-
 
   return (
     <>
@@ -118,7 +146,7 @@ export function AddNewEmployee({ organizationId, onAdd  }: AddNewEmployeeProps) 
           <div>
             <label className="block mb-1 font-medium">Position</label>
             <input
-              type="position"
+              type="text"
               value={position}
               onChange={(e) => setPosition(e.target.value)}
               className="w-full p-2 border rounded"
