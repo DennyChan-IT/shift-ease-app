@@ -8,6 +8,7 @@ type EmployeeType = {
   name: string;
   organizationId: string | null; // can be null (for admin, etc.)
   position?: string;
+  isActive: boolean;
 };
 
 export type DailyAvailabilitySlot = {
@@ -18,7 +19,7 @@ export type DailyAvailabilitySlot = {
   endTime?: string | null;
 };
 
-type Availability = {
+export type Availability = {
   id: string;
   employeeId: string;
   effectiveStart: string;
@@ -152,77 +153,74 @@ export function AvailabilityModal({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-    {/* Overlay */}
-    <div 
-      className="absolute inset-0 bg-black opacity-50" 
-      onClick={onClose} 
-    />
-    {/* Modal Content */}
-    <div className="relative bg-white rounded-lg p-6 shadow-lg">
-      <h2 className="text-xl font-semibold mb-4">
-        Assign Hours for {employee.name} on {format(date, "MMM dd, yyyy")}
-      </h2>
-      <p className="mb-4">
-        Available from
-        <strong>{convertTo12Hour(defaultStart)}</strong> to
-        <strong>
-          {defaultEndOriginal === "24:00"
-            ? "12:00 AM"
-            : convertTo12Hour(defaultEndOriginal)}
-        </strong>
-      </p>
-      <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
-        {/* form inputs */}
-        <div>
-          <label className="block font-medium">Start Time</label>
-          <input
-            type="time"
-            value={customStart}
-            onChange={(e) => setCustomStart(e.target.value)}
-            min={defaultStart}
-            max={defaultEndOriginal === "24:00" ? undefined : defaultEndOriginal}
-            required
-            className="border p-2 rounded"
-          />
-        </div>
-        <div>
-          <label className="block font-medium">End Time</label>
-          <input
-            type="time"
-            value={customEnd === "24:00" ? defaultEndForInput : customEnd}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (defaultEndOriginal === "24:00" && val === "00:00") {
-                setCustomEnd("24:00");
-              } else {
-                setCustomEnd(val);
-              }
-            }}
-            min={customStart}
-            max={defaultEndOriginal === "24:00" ? defaultEndForInput : defaultEndOriginal}
-            required
-            className="border p-2 rounded"
-          />
-        </div>
-        <div className="flex justify-end space-x-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Assign Shift
-          </button>
-        </div>
-      </form>
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black opacity-50" onClick={onClose} />
+      {/* Modal Content */}
+      <div className="relative bg-white rounded-lg p-6 shadow-lg">
+        <h2 className="text-xl font-semibold mb-4">
+          Assign Hours for {employee.name} on {format(date, "MMM dd, yyyy")}
+        </h2>
+        <p className="mb-4">
+          Available from
+          <strong>{convertTo12Hour(defaultStart)}</strong> to
+          <strong>
+            {defaultEndOriginal === "24:00"
+              ? "12:00 AM"
+              : convertTo12Hour(defaultEndOriginal)}
+          </strong>
+        </p>
+        <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+          {/* form inputs */}
+          <div>
+            <label className="block font-medium">Start Time</label>
+            <input
+              type="time"
+              value={customStart}
+              onChange={(e) => setCustomStart(e.target.value)}
+              min={defaultStart}
+              max={defaultEndOriginal === "24:00" ? undefined : defaultEndOriginal}
+              required
+              className="border p-2 rounded"
+            />
+          </div>
+          <div>
+            <label className="block font-medium">End Time</label>
+            <input
+              type="time"
+              value={customEnd === "24:00" ? defaultEndForInput : customEnd}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (defaultEndOriginal === "24:00" && val === "00:00") {
+                  setCustomEnd("24:00");
+                } else {
+                  setCustomEnd(val);
+                }
+              }}
+              min={customStart}
+              max={defaultEndOriginal === "24:00" ? defaultEndForInput : defaultEndOriginal}
+              required
+              className="border p-2 rounded"
+            />
+          </div>
+          <div className="flex justify-end space-x-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Assign Shift
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
-);
+  );
 }
 
 // New modal component for editing an already assigned shift.
@@ -254,69 +252,65 @@ function EditShiftModal({ isOpen, shift, onClose, onUpdate }: EditShiftModalProp
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-    {/* Backdrop */}
-    <div 
-      className="absolute inset-0 bg-black opacity-50" 
-      onClick={onClose} 
-    />
-    {/* Modal Container */}
-    <div className="relative bg-white rounded-lg p-6 shadow-lg">
-      <h2 className="text-xl font-semibold mb-4">
-        Edit Shift for {shift.employee.name} on {format(new Date(shift.date), "MMM dd, yyyy")}
-      </h2>
-      <p className="mb-4">
-        Available from <strong>{shift.startTime}</strong> to
-        <strong>{shift.endTime === "24:00" ? "12:00 AM" : shift.endTime}</strong>
-      </p>
-      <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
-        <div>
-          <label className="block font-medium">Start Time</label>
-          <input
-            type="time"
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            required
-            className="border p-2 rounded"
-          />
-        </div>
-        <div>
-          <label className="block font-medium">End Time</label>
-          <input
-            type="time"
-            value={endTime === "24:00" ? "00:00" : endTime}
-            onChange={(e) => {
-              const val = e.target.value;
-              if (shift.endTime === "24:00" && val === "00:00") {
-                setEndTime("24:00");
-              } else {
-                setEndTime(val);
-              }
-            }}
-            min={startTime}
-            required
-            className="border p-2 rounded"
-          />
-        </div>
-        <div className="flex justify-end space-x-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Save Shift
-          </button>
-        </div>
-      </form>
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black opacity-50" onClick={onClose} />
+      {/* Modal Container */}
+      <div className="relative bg-white rounded-lg p-6 shadow-lg">
+        <h2 className="text-xl font-semibold mb-4">
+          Edit Shift for {shift.employee.name} on {format(new Date(shift.date), "MMM dd, yyyy")}
+        </h2>
+        <p className="mb-4">
+          Available from <strong>{shift.startTime}</strong> to
+          <strong>{shift.endTime === "24:00" ? "12:00 AM" : shift.endTime}</strong>
+        </p>
+        <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+          <div>
+            <label className="block font-medium">Start Time</label>
+            <input
+              type="time"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              required
+              className="border p-2 rounded"
+            />
+          </div>
+          <div>
+            <label className="block font-medium">End Time</label>
+            <input
+              type="time"
+              value={endTime === "24:00" ? "00:00" : endTime}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (shift.endTime === "24:00" && val === "00:00") {
+                  setEndTime("24:00");
+                } else {
+                  setEndTime(val);
+                }
+              }}
+              min={startTime}
+              required
+              className="border p-2 rounded"
+            />
+          </div>
+          <div className="flex justify-end space-x-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              Save Shift
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
-);
-
+  );
 }
 
 const Schedules = () => {
@@ -581,15 +575,22 @@ const Schedules = () => {
       console.error("Error updating shift:", error);
     }
   };
-  
 
   if (!currentWeek) {
     return <div>Loading...</div>;
   }
 
-  // Compute the list of employees to display.
-  const employeesWithShift = employeesForOrg.filter((employee) =>
-    scheduledShifts.some((shift) => shift.employeeId === employee.id)
+// Filter employees to include only active ones.
+const activeEmployeesForOrg = employeesForOrg.filter(emp => emp.isActive);
+
+// Use active employees to filter scheduled shifts.
+const validScheduledShifts = scheduledShifts.filter((shift) =>
+  activeEmployeesForOrg.some((emp) => emp.id === shift.employeeId)
+);
+
+  // Compute the list of employees with at least one valid scheduled shift.
+  const employeesWithShift = activeEmployeesForOrg.filter((employee) =>
+    validScheduledShifts.some((shift) => shift.employeeId === employee.id)
   );
   const displayEmployees = Array.from(
     new Map(
@@ -597,16 +598,12 @@ const Schedules = () => {
     ).values()
   );
 
-  // For the dropdown, list available employees that are not already displayed.
-  const uniqueAvailableEmployees = employeesForOrg.filter(
-    (emp) => !displayEmployees.some((de) => de.id === emp.id)
-  );
-
+  // Use validScheduledShifts in place of scheduledShifts when finding assigned shifts.
   const findAssignedShift = (
     employeeId: string,
     date: Date
   ): ScheduledShift | undefined => {
-    return scheduledShifts.find((shift) => {
+    return validScheduledShifts.find((shift) => {
       const shiftDate = new Date(shift.date);
       return (
         shift.employeeId === employeeId &&
@@ -614,6 +611,11 @@ const Schedules = () => {
       );
     });
   };
+
+  // For the dropdown, list available employees that are not already displayed.
+  const uniqueAvailableEmployees = employeesForOrg.filter(
+    (emp) => !displayEmployees.some((de) => de.id === emp.id)
+  );
 
   return (
     <div className="flex-1 w-full p-4">
@@ -700,7 +702,7 @@ const Schedules = () => {
                         </div>
                         <div className="flex items-center p-3">
                           {
-                            scheduledShifts.filter(
+                            validScheduledShifts.filter(
                               (shift) =>
                                 new Date(shift.date).toDateString() ===
                                 day.date.toDateString()
@@ -725,13 +727,13 @@ const Schedules = () => {
                       );
                       if (assignedShift) {
                         return (
-<td
-  key={day.date.toISOString()}
-  className="bg-white border border-gray-300 px-4 py-2 cursor-pointer hover:bg-gray-100"
-  onClick={() => handleOpenEditModal(assignedShift)}
->
-    {assignedShift.startTime} - {assignedShift.endTime}
-</td>
+                          <td
+                            key={day.date.toISOString()}
+                            className="bg-white border border-gray-300 px-4 py-2 cursor-pointer hover:bg-gray-100"
+                            onClick={() => handleOpenEditModal(assignedShift)}
+                          >
+                            {assignedShift.startTime} - {assignedShift.endTime}
+                          </td>
                         );
                       } else {
                         const employeeAvailabilities =

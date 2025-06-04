@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { EmployeeType } from "../types/Employee";
 import { OrganizationType } from "../types/Organization";
 import { addDays } from "date-fns";
-import { DailyAvailabilitySlot } from "./Schedules";
+import { Availability, DailyAvailabilitySlot } from "./Schedules";
 
 type AvailabilityDay = {
   day: string;
@@ -237,9 +237,45 @@ export default function AddAvailability() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const token = await getToken();
-    // Adjust the effective end date (if needed) and convert to ISO string
+  
+    // --- Check for duplicate week availability ---
+    try {
+      const res = await fetch("http://localhost:8080/api/employees/availabilities", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (res.ok) {
+        const existingAvailabilities = await res.json();
+        // Filter availabilities for the selected employee
+        const employeeAvailabilities = existingAvailabilities.filter(
+          (a: Availability) => a.employeeId === selectedEmployee
+        );
+        // Convert the effectiveStart dates to a simple YYYY-MM-DD string
+        const newWeekStart = new Date(effectiveStartDate)
+          .toISOString()
+          .split("T")[0];
+        const duplicate = employeeAvailabilities.find((a: Availability) => {
+          const existingWeekStart = new Date(a.effectiveStart)
+            .toISOString()
+            .split("T")[0];
+          return existingWeekStart === newWeekStart;
+        });
+        if (duplicate) {
+          alert("This employee already has availability set for the selected week.");
+          return; // Stop submission if a duplicate is found
+        }
+      } else {
+        console.error("Failed to fetch existing availabilities.");
+      }
+    } catch (error) {
+      console.error("Error checking existing availabilities:", error);
+    }
+    // ---------------------------------------------
+  
+    // Adjust the effective end date and convert to ISO string
     const adjustedEffectiveEnd = addDays(new Date(effectiveEndDate), 1);
-
     const payload = {
       employeeId: selectedEmployee,
       effectiveStart: new Date(effectiveStartDate).toISOString(),
@@ -250,7 +286,6 @@ export default function AddAvailability() {
     const url = id
       ? `http://localhost:8080/api/employees/availabilities/${id}`
       : `http://localhost:8080/api/employees/availabilities`;
-
     const method = id ? "PUT" : "POST";
 
     try {

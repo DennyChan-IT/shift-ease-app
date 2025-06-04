@@ -8,8 +8,11 @@ export const getAllEmployees = async (req: Request, res: Response) => {
   const { userRole, userOrganizationId } = req;
 
   const employees = await prisma.employee.findMany({
-    where: userRole === "Manager" ? { organizationId: userOrganizationId } : {}, // Filter by organizationId if Manager
-    orderBy: { createdAt: "asc" }, // Ensures consistent order
+    where: {
+      isActive: true,
+      organizationId: userRole === "Manager" ? userOrganizationId : undefined,
+    },
+    orderBy: { createdAt: "asc" },
   });
 
   res.json(employees);
@@ -25,6 +28,32 @@ export const loggedUser = async (req: Request, res: Response) => {
   });
 
   res.json(dbUser);
+};
+
+export const getEmployeeByEmail = async (req: Request, res: Response) => {
+  const { email } = req.body; // Expect email in the request body
+
+  if (!email) {
+    res.status(400).json({ error: "Email is required." });
+    return;
+  }
+
+  try {
+    const employee = await prisma.employee.findUnique({
+      where: { email },
+    });
+
+    if (employee) {
+      res
+        .status(200)
+        .json({ exists: true, isActive: employee.isActive, employee });
+    } else {
+      res.status(200).json({ exists: false });
+    }
+  } catch (error) {
+    console.error("Error fetching employee by email:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
 
 export const addEmployee = async (req: Request, res: Response) => {
@@ -47,7 +76,7 @@ export const addEmployee = async (req: Request, res: Response) => {
 
     // If not a Manager, directly add employee
     const employee = await prisma.employee.create({
-      data: { name, email, position, organizationId },
+      data: { name, email: email.toLowerCase(), position, organizationId },
     });
 
     res.status(201).json(employee);
@@ -81,13 +110,49 @@ export const deleteEmployee = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    await prisma.employee.delete({
+    // Instead of deleting, mark the employee as inactive (soft delete)
+    await prisma.employee.update({
       where: { id },
+      data: { isActive: false },
     });
-    res.status(200).json({ message: "Employee deleted successfully" });
+    res.status(200).json({ message: "Employee deactivated successfully" });
   } catch (error) {
-    console.error("Error deleting employee:", error);
-    res.status(500).json({ error: "Failed to delete employee" });
+    console.error("Error deactivating employee:", error);
+    res.status(500).json({ error: "Failed to deactivate employee" });
+  }
+};
+
+export const reactivateEmployee = async (req: Request, res: Response) => {
+  const { email } = req.body; // Expect email in the request body
+
+  if (!email) {
+    res.status(400).json({ error: "Email is required." });
+    return;
+  }
+
+  try {
+    // First, ensure that an employee exists with the provided email.
+    const employee = await prisma.employee.findUnique({
+      where: { email },
+    });
+    if (!employee) {
+      res.status(404).json({ error: "Employee not found." });
+      return;
+    }
+
+    // Update the employee to set isActive to true.
+    const updatedEmployee = await prisma.employee.update({
+      where: { email },
+      data: { isActive: true },
+    });
+
+    res.status(200).json({
+      message: "Employee reactivated successfully",
+      employee: updatedEmployee,
+    });
+  } catch (error) {
+    console.error("Error reactivating employee:", error);
+    res.status(500).json({ error: "Failed to reactivate employee" });
   }
 };
 
@@ -119,7 +184,7 @@ export const approveRequest = async (req: Request, res: Response) => {
     const employee = await prisma.employee.create({
       data: {
         name: pendingRequest.name,
-        email: pendingRequest.email,
+        email: pendingRequest.email.toLowerCase(),
         position: pendingRequest.position,
         organizationId: pendingRequest.organizationId,
       },
@@ -144,7 +209,6 @@ export const approveRequest = async (req: Request, res: Response) => {
   }
 };
 
-
 export const rejectRequest = async (req: Request, res: Response) => {
   const { id } = req.params;
 
@@ -163,7 +227,7 @@ export const getAllAvailabilities = async (req: Request, res: Response) => {
   try {
     const availabilities = await prisma.availability.findMany({
       include: {
-        employee: true, 
+        employee: true,
         DailyAvailabilitySlot: true, // Include the DailyAvailabilitySlot records here
       },
       orderBy: { effectiveStart: "asc" },
@@ -175,14 +239,13 @@ export const getAllAvailabilities = async (req: Request, res: Response) => {
   }
 };
 
-
-export const getEachAvailabilities = async (req: Request, res: Response) => { 
+export const getEachAvailabilities = async (req: Request, res: Response) => {
   const { id } = req.params; // Extract ID from request parameters
 
   try {
     const availability = await prisma.availability.findUnique({
       where: { id },
-      include: { 
+      include: {
         employee: true, // Include employee details if needed
         DailyAvailabilitySlot: true, // Include daily availability slots
       },
@@ -212,19 +275,21 @@ export const addAvailability = async (req: Request, res: Response) => {
         effectiveStart: new Date(effectiveStart),
         effectiveEnd: new Date(effectiveEnd),
         DailyAvailabilitySlot: {
-          create: availability.map((slot: {
-            day: string;
-            allDay: boolean;
-            available: boolean;
-            startTime: string;
-            endTime: string;
-          }) => ({
-            day: slot.day,
-            allDay: slot.allDay,
-            available: slot.allDay ? true : slot.available,
-            startTime: slot.allDay ? "09:00" : slot.startTime,
-            endTime: slot.allDay ? "24:00" : slot.endTime,
-          })),
+          create: availability.map(
+            (slot: {
+              day: string;
+              allDay: boolean;
+              available: boolean;
+              startTime: string;
+              endTime: string;
+            }) => ({
+              day: slot.day,
+              allDay: slot.allDay,
+              available: slot.allDay ? true : slot.available,
+              startTime: slot.allDay ? "09:00" : slot.startTime,
+              endTime: slot.allDay ? "24:00" : slot.endTime,
+            })
+          ),
         },
       },
       include: {
@@ -256,19 +321,21 @@ export const updateAvailability = async (req: Request, res: Response) => {
         effectiveStart: new Date(effectiveStart),
         effectiveEnd: new Date(effectiveEnd),
         DailyAvailabilitySlot: {
-          create: availability.map((slot: {
-            day: string;
-            allDay: boolean;
-            available: boolean;
-            startTime: string;
-            endTime: string;
-          }) => ({
-            day: slot.day,
-            allDay: slot.allDay,
-            available: slot.allDay ? true : slot.available,
-            startTime: slot.allDay ? "09:00" : slot.startTime,
-            endTime: slot.allDay ? "24:00" : slot.endTime,
-          })),
+          create: availability.map(
+            (slot: {
+              day: string;
+              allDay: boolean;
+              available: boolean;
+              startTime: string;
+              endTime: string;
+            }) => ({
+              day: slot.day,
+              allDay: slot.allDay,
+              available: slot.allDay ? true : slot.available,
+              startTime: slot.allDay ? "09:00" : slot.startTime,
+              endTime: slot.allDay ? "24:00" : slot.endTime,
+            })
+          ),
         },
       },
       include: {
@@ -282,7 +349,6 @@ export const updateAvailability = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to update availability" });
   }
 };
-
 
 export const deleteAvailability = async (req: Request, res: Response) => {
   const { id } = req.params;
@@ -303,7 +369,10 @@ export const deleteAvailability = async (req: Request, res: Response) => {
   }
 };
 
-export const getAvailabilityByOrganization = async (req: Request, res: Response) => {
+export const getAvailabilityByOrganization = async (
+  req: Request,
+  res: Response
+) => {
   const { organizationId } = req.query;
 
   try {
@@ -358,7 +427,10 @@ export const updateScheduledShift = async (req: Request, res: Response) => {
   }
 };
 
-export const getScheduledShiftsByOrganization = async (req: Request, res: Response) => {
+export const getScheduledShiftsByOrganization = async (
+  req: Request,
+  res: Response
+) => {
   const { organizationId } = req.query;
 
   try {
