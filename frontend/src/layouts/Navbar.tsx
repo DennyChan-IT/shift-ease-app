@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import logo from "../assets/logo.png";
 
 import { AiOutlineDashboard } from "react-icons/ai";
@@ -18,7 +18,7 @@ export function Navbar() {
     const fetchUserInfo = async () => {
       try {
         const token = await getToken();
-        const res = await fetch("http://localhost:8080/api/user-info", {
+        const res = await fetch("/api/user-info", {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

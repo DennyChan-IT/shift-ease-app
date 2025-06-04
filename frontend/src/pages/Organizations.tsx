@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { LuBuilding } from "react-icons/lu";
 import { FiTrash2 } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
@@ -19,7 +19,7 @@ export default function Organizations() {
     const checkUserRole = async () => {
       const token = await getToken();
       try {
-        const resp = await fetch("http://localhost:8080/api/user-info", {
+        const resp = await fetch("/api/user-info", {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

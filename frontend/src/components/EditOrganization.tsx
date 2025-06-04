@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { FiEdit } from "react-icons/fi";
 import { useAuth } from "@clerk/clerk-react";
 import { OrganizationType } from "../types/Organization";
@@ -21,7 +21,7 @@ export function EditOrganization({ organization, onClose }: Props) {
     e.preventDefault();
     const token = await getToken();
     const res = await fetch(
-      `http://localhost:8080/api/organizations/${organization.id}`,
+      `/api/organizations/${organization.id}`,
       {
         method: "PUT",
         headers: {

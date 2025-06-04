@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { EmployeeType } from "../types/Employee";
@@ -128,7 +128,7 @@ export default function AddAvailability() {
     const fetchUserDetails = async () => {
       const token = await getToken();
       try {
-        const response = await fetch("http://localhost:8080/api/user-info", {
+        const response = await fetch("/api/user-info", {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -165,7 +165,7 @@ export default function AddAvailability() {
   const fetchOrganizations = async () => {
     const token = await getToken();
     try {
-      const response = await fetch("http://localhost:8080/api/organizations", {
+      const response = await fetch("/api/organizations", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -187,7 +187,7 @@ export default function AddAvailability() {
     const token = await getToken();
     try {
       const response = await fetch(
-        `http://localhost:8080/api/employees?organizationId=${orgId}`,
+        `/api/employees?organizationId=${orgId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -234,7 +234,7 @@ export default function AddAvailability() {
         const token = await getToken();
         try {
           const response = await fetch(
-            `http://localhost:8080/api/employees/availabilities/${id}`,
+            `/api/employees/availabilities/${id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -294,7 +294,7 @@ export default function AddAvailability() {
     // --- Check for duplicate week availability ---
     try {
       const res = await fetch(
-        "http://localhost:8080/api/employees/availabilities",
+        "/api/employees/availabilities",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -343,8 +343,8 @@ export default function AddAvailability() {
     };
 
     const url = id
-      ? `http://localhost:8080/api/employees/availabilities/${id}`
-      : `http://localhost:8080/api/employees/availabilities`;
+      ? `/api/employees/availabilities/${id}`
+      : `/api/employees/availabilities`;
     const method = id ? "PUT" : "POST";
 
     try {

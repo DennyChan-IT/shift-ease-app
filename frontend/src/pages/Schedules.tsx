@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
 import { useOrganizations } from "../contexts/organization-context";
 import { useAuth } from "@clerk/clerk-react";
@@ -398,7 +398,7 @@ const Schedules = () => {
     const fetchUserDetails = async () => {
       const token = await getToken();
       try {
-        const response = await fetch("http://localhost:8080/api/user-info", {
+        const response = await fetch("/api/user-info", {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -437,7 +437,7 @@ const Schedules = () => {
     const token = await getToken();
     try {
       const response = await fetch(
-        `http://localhost:8080/api/employees?organizationId=${orgId}`,
+        `/api/employees?organizationId=${orgId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -460,7 +460,7 @@ const Schedules = () => {
   const fetchAvailabilities = async (orgId: string) => {
     const token = await getToken();
     const response = await fetch(
-      "http://localhost:8080/api/employees/availabilities",
+      "/api/employees/availabilities",
       {
         headers: {
           "Content-Type": "application/json",
@@ -489,7 +489,7 @@ const Schedules = () => {
   const fetchScheduledShifts = async (orgId: string) => {
     const token = await getToken();
     const response = await fetch(
-      `http://localhost:8080/api/employees/scheduled-shifts?organizationId=${orgId}`,
+      `/api/employees/scheduled-shifts?organizationId=${orgId}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -558,7 +558,7 @@ const Schedules = () => {
     const dateString = modalDate.toISOString();
     try {
       const response = await fetch(
-        "http://localhost:8080/api/employees/scheduled-shifts",
+        "/api/employees/scheduled-shifts",
         {
           method: "POST",
           headers: {
@@ -604,7 +604,7 @@ const Schedules = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/employees/scheduled-shifts/${updatedShift.id}`,
+        `/api/employees/scheduled-shifts/${updatedShift.id}`,
         {
           method: "PUT",
           headers: {

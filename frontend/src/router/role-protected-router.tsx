@@ -18,7 +18,7 @@ export default function RoleProtectedRoute({
     const fetchUserRole = async () => {
       const token = await getToken();
       try {
-        const res = await fetch("http://localhost:8080/api/user-info", {
+        const res = await fetch("/api/user-info", {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",

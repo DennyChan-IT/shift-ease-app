@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/clerk-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useOrganizations } from "../contexts/organization-context";
 
 export function CreateOrganization() {
@@ -14,7 +14,7 @@ export function CreateOrganization() {
     const token = await getToken();
 
     try {
-      const response = await fetch("http://localhost:8080/api/organizations", {
+      const response = await fetch("/api/organizations", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

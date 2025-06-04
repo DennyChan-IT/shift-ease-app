@@ -1,5 +1,5 @@
 import { useAuth } from "@clerk/clerk-react";
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { EmployeeType } from "../types/Employee";
 
 type AddNewEmployeeProps = {
@@ -23,7 +23,7 @@ export function AddNewEmployee({ organizationId, onAdd }: AddNewEmployeeProps) {
 
     // Check for existing employee by email
     const checkResp = await fetch(
-      "http://localhost:8080/api/employees/by-email",
+      "/api/employees/by-email",
       {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -41,7 +41,7 @@ export function AddNewEmployee({ organizationId, onAdd }: AddNewEmployeeProps) {
     // If exists but inactive, reactivate
     if (check.exists && !check.isActive) {
       const reactResp = await fetch(
-        "http://localhost:8080/api/employees/reactivate",
+        "/api/employees/reactivate",
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -55,7 +55,7 @@ export function AddNewEmployee({ organizationId, onAdd }: AddNewEmployeeProps) {
     }
 
     // Normal add
-    const resp = await fetch("http://localhost:8080/api/employees", {
+    const resp = await fetch("/api/employees", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ name, email, position, organizationId }),
@@ -67,7 +67,7 @@ export function AddNewEmployee({ organizationId, onAdd }: AddNewEmployeeProps) {
       } else {
         onAdd(result);
         // send invitation
-        await fetch("http://localhost:8080/api/invitations", {
+        await fetch("/api/invitations", {
           method: "POST",
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
           body: JSON.stringify({ emailAddress: email }),

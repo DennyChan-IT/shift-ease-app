@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useAuth, useSignIn } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
@@ -25,7 +25,7 @@ export default function EmployeeSignIn() {
 
         // fetch the user's role
         const token = await getToken();
-        const res = await fetch("http://localhost:8080/api/user-info", {
+        const res = await fetch("/api/user-info", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -52,8 +52,7 @@ export default function EmployeeSignIn() {
       <div className="text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-black">
         <img src={logo} alt="App Logo" className="w-24 mx-auto mb-4" />
         <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-black mb-4">
-          Employee Sign-In
-        </h2>
+          Employee Sign-In</h2>
         {error && <p className="text-red-500">{error}</p>}
         <input
           type="email"

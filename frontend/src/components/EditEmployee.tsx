@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { EmployeeType } from "../types/Employee";
 import { FiEdit } from "react-icons/fi";
 import { useAuth } from "@clerk/clerk-react";
@@ -41,7 +41,7 @@ export function EditEmployee({
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/employees/${employee.id}`,
+        `/api/employees/${employee.id}`,
         {
           method: "PUT",
           headers: {
