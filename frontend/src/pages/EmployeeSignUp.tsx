@@ -1,17 +1,24 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { Clerk } from "@clerk/clerk-js";
 import logo from "../assets/logo.png";
 
 const pubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const clerk = new Clerk(pubKey);
 
-await clerk.load();
-
 const EmployeeSignUp: React.FC = () => {
   useEffect(() => {
+    // Load Clerk client once on mount
+    clerk.load().catch((err) => console.error("Error loading Clerk:", err));
+
+    // Initialize sign-up flow
     const initializeClerk = async () => {
-      const param = "__clerk_ticket";
-      const token = new URL(window.location.href).searchParams.get(param);
+      const token = new URL(window.location.href).searchParams.get(
+        "__clerk_ticket"
+      );
+      if (!token) {
+        console.error("No __clerk_ticket found in URL");
+        return;
+      }
 
       const form = document.getElementById("sign-up-form");
       if (form) {
@@ -21,7 +28,7 @@ const EmployeeSignUp: React.FC = () => {
           const password = formData.get("password") as string;
 
           try {
-            const signUpAttempt = await clerk.client.signUp.create({
+            const signUpAttempt = await clerk.client!.signUp.create({
               strategy: "ticket",
               ticket: token,
               password,
@@ -31,7 +38,10 @@ const EmployeeSignUp: React.FC = () => {
               await clerk.setActive({ session: signUpAttempt.createdSessionId });
               window.location.href = "/dashboard"; // Redirect to dashboard
             } else {
-              console.error(JSON.stringify(signUpAttempt, null, 2));
+              console.error(
+                "Sign-up incomplete:",
+                JSON.stringify(signUpAttempt, null, 2)
+              );
             }
           } catch (err) {
             console.error("Error during sign-up:", err);
@@ -45,12 +55,15 @@ const EmployeeSignUp: React.FC = () => {
 
   return (
     <div className="flex items-center justify-center h-screen bg-slate-100">
-      <div className="w-[30vw] text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-black">
-      <img src={logo} alt="App Logo" className="w-24 mx-auto mb-4" />
-      <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-black mb-2">
-      Welcome to ShiftEase App</h2>
-      <p className="text-[14px] mb-4">Let's create your account so you can start seeing your schedule</p>
-      <h2 className="text-[18px] flex justify-left text-[14px] mb-0">Password</h2>
+      <div className="w-[30vw] text-center bg-white p-[30px] rounded-lg shadow-lg border-t-4 border-black">
+        <img src={logo} alt="App Logo" className="w-24 mx-auto mb-4" />
+        <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-black mb-2">
+          Welcome to ShiftEase App
+        </h2>
+        <p className="text-[14px] mb-4">
+          Let's create your account so you can start seeing your schedule
+        </p>
+        <h2 className="text-[18px] text-left text-[14px] mb-0">Password</h2>
         <form id="sign-up-form">
           <input
             name="password"

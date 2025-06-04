@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { FiInbox } from "react-icons/fi";
 import { PendingRequest } from "../types/PendingRequest";
@@ -13,7 +13,7 @@ export default function PendingRequests() {
     (async () => {
       const token = await getToken();
       try {
-        const res = await fetch("http://localhost:8080/api/employees/logged-user", {
+        const res = await fetch("/api/employees/logged-user", {
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         });
         if (res.ok) {
@@ -31,7 +31,7 @@ export default function PendingRequests() {
     (async () => {
       const token = await getToken();
       try {
-        const res = await fetch("http://localhost:8080/api/employees/pending-requests", {
+        const res = await fetch("/api/employees/pending-requests", {
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         });
         if (res.ok) {
@@ -46,7 +46,7 @@ export default function PendingRequests() {
   const handleApprove = async (id: string) => {
     const token = await getToken();
     const res = await fetch(
-      `http://localhost:8080/api/employees/pending-requests/${id}`,
+      `/api/employees/pending-requests/${id}`,
       { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
     );
     if (res.ok) setPendingRequests((prev) => prev.filter((r) => r.id !== id));
@@ -55,7 +55,7 @@ export default function PendingRequests() {
   const handleDeny = async (id: string) => {
     const token = await getToken();
     const res = await fetch(
-      `http://localhost:8080/api/employees/pending-requests/${id}`,
+      `/api/employees/pending-requests/${id}`,
       { method: "DELETE", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
     );
     if (res.ok) setPendingRequests((prev) => prev.filter((r) => r.id !== id));

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useSignUp } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
@@ -50,7 +50,7 @@ export default function AdminSignUp() {
         // Add admin to the database
         const token = signUpAttempt.createdSessionId; // Use the session token for authentication
         try {
-          const response = await fetch("http://localhost:8080/api/admin", {
+          const response = await fetch("/api/admin", {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -71,7 +71,7 @@ export default function AdminSignUp() {
           console.error("Error adding admin to the database:", error);
         }
 
-        // Redirect to the dashboard or home page
+        // Redirect to the dashboard
         navigate("/dashboard");
       } else {
         setError("Verification failed. Please check your code and try again.");

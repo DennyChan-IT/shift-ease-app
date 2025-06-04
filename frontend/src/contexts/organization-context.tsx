@@ -31,7 +31,7 @@ export function OrganizationContextProvider({ children }: Props) {
   const fetchOrganizations = async () => {
     const token = await getToken();
     try {
-      const response = await fetch("http://localhost:8080/api/organizations", {
+      const response = await fetch("/api/organizations", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -56,7 +56,7 @@ export function OrganizationContextProvider({ children }: Props) {
     const token = await getToken();
     try {
       const response = await fetch(
-        `http://localhost:8080/api/organizations/${id}`,
+        `/api/organizations/${id}`,
         {
           method: "DELETE",
           headers: {

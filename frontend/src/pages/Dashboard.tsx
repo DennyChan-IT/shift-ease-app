@@ -21,7 +21,7 @@ export function Dashboard() {
       const token = await getToken();
       try {
         const response = await fetch(
-          "http://localhost:8080/api/employees/logged-user",
+          "/api/employees/logged-user",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -51,7 +51,7 @@ export function Dashboard() {
       const token = await getToken();
 
       const response = await fetch(
-        "http://localhost:8080/api/employees/pending-requests",
+        "/api/employees/pending-requests",
         {
           headers: {
             Authorization: `Bearer ${token}`,

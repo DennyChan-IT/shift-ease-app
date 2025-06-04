@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -35,7 +35,7 @@ export function Availability() {
     const fetchAvailabilities = async () => {
       const token = await getToken();
       try {
-        const response = await fetch("http://localhost:8080/api/employees/availabilities", {
+        const response = await fetch("/api/employees/availabilities", {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -58,7 +58,7 @@ export function Availability() {
   const handleDelete = async (id: string) => {
     const token = await getToken();
     try {
-      const response = await fetch(`http://localhost:8080/api/employees/availabilities/${id}`, {
+      const response = await fetch(`/api/employees/availabilities/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

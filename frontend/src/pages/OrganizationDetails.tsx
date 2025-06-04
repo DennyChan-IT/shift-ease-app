@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useParams, Link } from "react-router-dom";
 import { OrganizationType } from "../types/Organization";
@@ -20,7 +20,7 @@ export default function OrganizationDetails() {
   // Fetch organization + employees
   const fetchOrganizationDetails = async () => {
     const token = await getToken();
-    const res = await fetch(`http://localhost:8080/api/organizations/${id}`, {
+    const res = await fetch(`/api/organizations/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -33,7 +33,7 @@ export default function OrganizationDetails() {
     const fetchRole = async () => {
       const token = await getToken();
       try {
-        const res = await fetch("http://localhost:8080/api/user-info", {
+        const res = await fetch("/api/user-info", {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -54,7 +54,7 @@ export default function OrganizationDetails() {
   const handleDeleteEmployee = async (employeeId: string) => {
     const token = await getToken();
     const res = await fetch(
-      `http://localhost:8080/api/employees/${employeeId}`,
+      `/api/employees/${employeeId}`,
       { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
     );
     if (res.ok) {
@@ -74,7 +74,7 @@ export default function OrganizationDetails() {
   // Reactivate employee
   const handleReactivate = async (email: string) => {
     const token = await getToken();
-    const res = await fetch(`http://localhost:8080/api/employees/reactivate`, {
+    const res = await fetch(`/api/employees/reactivate`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

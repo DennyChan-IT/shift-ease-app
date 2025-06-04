@@ -24,7 +24,7 @@ export function EmployeeContextProvider({ children }: Props) {
     const token = await getToken();
 
     try {
-      const response = await fetch("http://localhost:8080/api/employees", {
+      const response = await fetch("/api/employees", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
