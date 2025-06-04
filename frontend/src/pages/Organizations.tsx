@@ -1,14 +1,14 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { LuBuilding } from "react-icons/lu";
+import { FiTrash2 } from "react-icons/fi";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import { useOrganizations } from "../contexts/organization-context";
 import { useEmployees } from "../contexts/employee-context";
-import { LuBuilding } from "react-icons/lu";
-import { Link } from "react-router-dom";
-import { FiTrash2 } from "react-icons/fi";
+import { EditOrganization } from "../components/EditOrganization";
 
 export default function Organizations() {
-  const { organizations, remove } = useOrganizations();
+  const { organizations, remove, fetchOrganizations } = useOrganizations();
   const { employees, fetchEmployees } = useEmployees();
   const { getToken } = useAuth();
   const navigate = useNavigate();
@@ -19,40 +19,36 @@ export default function Organizations() {
     const checkUserRole = async () => {
       const token = await getToken();
       try {
-        const response = await fetch("http://localhost:8080/api/user-info", {
+        const resp = await fetch("http://localhost:8080/api/user-info", {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
-
-        if (response.ok) {
-          const data = await response.json();
-
+        if (resp.ok) {
+          const data = await resp.json();
           if (data.position === "Manager") {
-            // Redirect managers directly to their organization details page
             navigate(`/organizations/${data.organizationId}`);
           }
         } else {
-          console.error("Failed to fetch user info.");
+          console.error("Failed to fetch user info");
         }
-      } catch (error) {
-        console.error("Error fetching user info:", error);
+      } catch (err) {
+        console.error("Error fetching user info:", err);
       }
     };
 
     checkUserRole();
   }, []);
 
-  // If no organizations exist
   if (organizations.length === 0) {
     return (
       <div className="w-full flex flex-col items-center justify-center h-screen bg-gray-100">
-        <LuBuilding className="text-gray-500 text-6xl mx-auto mb-4" />
+        <LuBuilding className="text-gray-500 text-6xl mb-4" />
         <h2 className="text-xl font-semibold text-gray-800 mb-2">
           No Organizations Yet
         </h2>
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-600 mb-6 text-center">
           Get started by adding your first organization to manage employees and
           schedules.
         </p>
@@ -65,7 +61,6 @@ export default function Organizations() {
     );
   }
 
-  // If the user is an admin, show the list of all organizations
   return (
     <div className="flex-1 w-full p-6">
       <h2 className="text-2xl font-bold mb-4">Organizations Overview</h2>
@@ -73,24 +68,33 @@ export default function Organizations() {
         {organizations.map((org) => (
           <div
             key={org.id}
-            className="bg-white p-6 border rounded-lg shadow-md hover:shadow-lg transition relative"
+            className="relative bg-white p-6 border rounded-lg shadow-md hover:shadow-lg transition"
           >
+            {/* Edit & Delete buttons */}
             <div className="flex justify-between mb-2">
               <h3 className="text-lg font-semibold text-gray-800">
                 {org.name}
               </h3>
-              <button
-                onClick={() => remove(org.id)}
-                className="text-center text-red-500 hover:text-red-700 transition"
-              >
-                <FiTrash2 />
-              </button>
+              <div className="flex">
+                <EditOrganization
+                  organization={org}
+                  onClose={fetchOrganizations}
+                />
+                <button
+                  onClick={() => remove(org.id)}
+                  className="text-center text-red-500 hover:text-red-700"
+                >
+                  <FiTrash2 />
+                </button>
+              </div>
             </div>
+
             <p className="text-gray-600 mb-4">
               📍 {org.location || "Location not specified"}
             </p>
             <p className="text-gray-600 mb-4">
-              {employees.filter((emp) => emp.organizationId === org.id).length} employees
+              {employees.filter((e) => e.organizationId === org.id).length}{" "}
+              employees
             </p>
             <button>
               <Link

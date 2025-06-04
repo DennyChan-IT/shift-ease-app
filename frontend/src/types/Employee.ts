@@ -4,5 +4,6 @@ export type EmployeeType = {
     email: string;
     position: string;
     organizationId: string;
+    isActive: boolean;
   };
   

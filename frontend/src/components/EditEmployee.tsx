@@ -11,6 +11,7 @@ type EditEmployeeProps = {
     name: string;
     email: string;
     position: string;
+    isActive:boolean;
   }) => void; // Callback to update the employee list
 };
 
@@ -40,7 +41,6 @@ export function EditEmployee({
 
     try {
       const response = await fetch(
-        
         `http://localhost:8080/api/employees/${employee.id}`,
         {
           method: "PUT",
@@ -76,7 +76,7 @@ export function EditEmployee({
 
       <dialog
         ref={dialogRef}
-        className="rounded-lg w-96 p-6 bg-white shadow-lg"
+        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-lg w-96 p-6 bg-white shadow-lg"
       >
         <h2 className="text-xl font-semibold mb-4">Edit Employee</h2>
         <p className="text-gray-600 mb-4">
@@ -105,19 +105,13 @@ export function EditEmployee({
           </div>
           <div>
             <label className="block mb-1 font-medium">Position</label>
-            <select
+            <input
+              type="text"
               value={position}
               onChange={(e) => setPosition(e.target.value)}
               className="w-full p-2 border rounded"
               required
-            >
-              <option value="" disabled>
-                Select a position
-              </option>
-              <option value="Manager">Manager</option>
-              <option value="Developer">Developer</option>
-              <option value="Designer">Designer</option>
-            </select>
+            />
           </div>
           <div className="flex justify-end space-x-4">
             <button
