@@ -306,7 +306,8 @@ export default function AddAvailability() {
         const existingAvailabilities = await res.json();
         // Filter availabilities for the selected employee
         const employeeAvailabilities = existingAvailabilities.filter(
-          (a: Availability) => a.employeeId === selectedEmployee
+          (a: Availability) =>
+            a.employeeId === selectedEmployee && (!isEditing || a.id !== id)
         );
         // Convert the effectiveStart dates to a simple YYYY-MM-DD string
         const newWeekStart = new Date(effectiveStartDate)
@@ -426,11 +427,7 @@ export default function AddAvailability() {
             </select>
           </label>
         )}
-        {userRole && userRole !== "Admin" && userRole !== "Manager" && (
-          <p>
-            Adding availability for: <strong>Yourself</strong>
-          </p>
-        )}
+        {userRole && userRole !== "Admin" && userRole !== "Manager"}
         <label className="block">
           <span className="font-semibold">Effective Dates</span>
           <div className="flex space-x-2">
@@ -531,17 +528,17 @@ export default function AddAvailability() {
         </div>
         <div className="flex space-x-4 justify-end">
           <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Save
-          </button>
-          <button
             type="button"
             onClick={() => navigate("/availability")}
             className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400"
           >
             Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
+          >
+            Save
           </button>
         </div>
       </form>

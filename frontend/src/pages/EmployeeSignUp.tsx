@@ -45,9 +45,9 @@ const EmployeeSignUp: React.FC = () => {
 
   return (
     <div className="flex items-center justify-center h-screen bg-slate-100">
-      <div className="w-[30vw] text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-teal-500">
+      <div className="w-[30vw] text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-black">
       <img src={logo} alt="App Logo" className="w-24 mx-auto mb-4" />
-      <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-teal-500">
+      <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-black mb-2">
       Welcome to ShiftEase App</h2>
       <p className="text-[14px] mb-4">Let's create your account so you can start seeing your schedule</p>
       <h2 className="text-[18px] flex justify-left text-[14px] mb-0">Password</h2>
@@ -56,12 +56,12 @@ const EmployeeSignUp: React.FC = () => {
             name="password"
             type="password"
             placeholder="Enter your password"
-            className="w-full px-3 py-2 mb-4 border border-blue-500 rounded"
+            className="w-full px-3 py-2 mb-4 border border-black rounded"
             required
           />
           <button
             type="submit"
-            className="w-full py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-700 transition"
+            className="w-full py-2 bg-black text-white font-semibold rounded hover:bg-gray-800 transition"
           >
             Sign Up
           </button>

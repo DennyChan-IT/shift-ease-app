@@ -76,7 +76,7 @@ export function EditEmployee({
 
       <dialog
         ref={dialogRef}
-        className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-lg w-96 p-6 bg-white shadow-lg"
+        className="fixed left-1/2 transform -translate-x-1/2 rounded-lg w-96 p-6 bg-white shadow-lg"
       >
         <h2 className="text-xl font-semibold mb-4">Edit Employee</h2>
         <p className="text-gray-600 mb-4">
@@ -123,7 +123,7 @@ export function EditEmployee({
             </button>
             <button
               type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
             >
               Update Employee
             </button>

@@ -3,7 +3,7 @@ import ProtectedRoutes from "./protected-router";
 import RoleSelection from "../pages/RoleSelection";
 import AdminSignIn from "../pages/AdminSignIn";
 import AdminSignUp from "../pages/AdminSignUp";
-import { Sidebar } from "../layouts/sidebar";
+import { Navbar } from "../layouts/Navbar";
 import { Dashboard } from "../pages/Dashboard";
 import { CreateOrganization } from "../components/CreateOrganization";
 import Organizations from "../pages/Organizations";
@@ -49,11 +49,16 @@ export const router = createBrowserRouter([
       { path: "/", element: <Navigate to="dashboard" /> },
 
       {
-        element: <Sidebar />,
+        element: <Navbar />,
         children: [
+
           {
             path: "/dashboard",
-            element: <Dashboard />,
+            element: (
+              <RoleProtectedRoute allowedRoles={["Admin", "Manager"]}>
+                <Dashboard />
+              </RoleProtectedRoute>
+            ),
             children: [
               {
                 path: "",
@@ -75,7 +80,11 @@ export const router = createBrowserRouter([
           },
           {
             path: "/organizations",
-            element: <Organizations />,
+            element: (
+              <RoleProtectedRoute allowedRoles={["Admin", "Manager"]}>
+                <Organizations />
+              </RoleProtectedRoute>
+            ),
           },
           {
             path: "/organizations/:id",

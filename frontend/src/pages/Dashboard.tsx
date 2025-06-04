@@ -100,7 +100,7 @@ export function Dashboard() {
         {/* Tab Navigation */}
         <div className="flex">
           <div className="w-72 mr-5">
-            <div className="font-semibold">Dashboard</div>
+            <div className="text-xl font-bold mb-2">Dashboard</div>
             <ul className="pr-5 h-[50vh] border-r border-r-gray-300">
               <li>
                 <NavLink
