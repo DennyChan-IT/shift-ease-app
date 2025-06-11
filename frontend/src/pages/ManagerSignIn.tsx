@@ -5,8 +5,8 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import logo from "../assets/logo.png";
 
 export default function ManagerSignIn() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("emily.chen@example.com");
+  const [password, setPassword] = useState("shiftease");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null); // Error state now allows string or null
   const { isLoaded, signIn, setActive } = useSignIn();
@@ -32,7 +32,7 @@ export default function ManagerSignIn() {
 
       const { role } = await roleResp.json();
       if (role !== "Manager") {
-        alert("You don’t have Admin access.");
+        alert("You don’t have Manager access.");
         return;
       }
       const signInAttempt = await signIn.create({

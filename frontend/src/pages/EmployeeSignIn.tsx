@@ -5,8 +5,8 @@ import { FiEye, FiEyeOff } from "react-icons/fi";
 import logo from "../assets/logo.png";
 
 export default function EmployeeSignIn() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("michael.lee@example.com");
+  const [password, setPassword] = useState("shiftease");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null); // Error state now allows string or null
   const { isLoaded, signIn, setActive } = useSignIn();
