@@ -1,62 +1,58 @@
-import { useEffect, useState } from "react";
-import { Clerk } from "@clerk/clerk-js";
+import { useState, useEffect } from "react";
+import { useSignUp } from "@clerk/clerk-react";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import logo from "../assets/logo.png";
 
-const pubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-const clerk = new Clerk(pubKey);
-
-const EmployeeSignUp: React.FC = () => {
+export default function EmployeeSignUp() {
+  const { isLoaded, signUp, setActive } = useSignUp();
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+
+  // Extract ticket from URL once
+  const ticket =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("__clerk_ticket")
+      : null;
 
   useEffect(() => {
-    // Load Clerk client once on mount
-    clerk.load().catch((err) => console.error("Error loading Clerk:", err));
+    if (!ticket) {
+      console.error("No __clerk_ticket found in URL");
+    }
+  }, [ticket]);
 
-    // Initialize sign-up flow
-    const initializeClerk = async () => {
-      const token = new URL(window.location.href).searchParams.get(
-        "__clerk_ticket"
-      );
-      if (!token) {
-        console.error("No __clerk_ticket found in URL");
-        return;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isLoaded || !ticket) return;
+
+    try {
+      // Create sign-up via invitation ticket
+      const signUpAttempt = await signUp.create({
+        strategy: "ticket",
+        ticket,
+        password,
+      });
+
+      if (signUpAttempt.status === "complete") {
+        // Activate session
+        await setActive({ session: signUpAttempt.createdSessionId! });
+        // Redirect after success
+        navigate("/dashboard");
+      } else {
+        console.error("Sign-up incomplete:", signUpAttempt);
       }
+    } catch (err) {
+      console.error("Error during sign-up:", err);
+    }
+  };
 
-      const form = document.getElementById("sign-up-form");
-      if (form) {
-        form.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const formData = new FormData(form as HTMLFormElement);
-          const password = formData.get("password") as string;
-
-          try {
-            const signUpAttempt = await clerk.client!.signUp.create({
-              strategy: "ticket",
-              ticket: token,
-              password,
-            });
-
-            if (signUpAttempt.status === "complete") {
-              await clerk.setActive({
-                session: signUpAttempt.createdSessionId,
-              });
-              window.location.href = "/dashboard"; // Redirect to dashboard
-            } else {
-              console.error(
-                "Sign-up incomplete:",
-                JSON.stringify(signUpAttempt, null, 2)
-              );
-            }
-          } catch (err) {
-            console.error("Error during sign-up:", err);
-          }
-        });
-      }
-    };
-
-    initializeClerk();
-  }, []);
+  if (!isLoaded) {
+    return <p>Loading Clerk...</p>;
+  }
+  if (!ticket) {
+    return <p>Invalid invitation link.</p>;
+  }
 
   return (
     <div className="flex items-center justify-center h-screen bg-slate-100">
@@ -68,14 +64,15 @@ const EmployeeSignUp: React.FC = () => {
         <p className="text-[14px] mb-4">
           Let's create your account so you can start seeing your schedule
         </p>
-        <h2 className="text-left text-[14px] mb-0">Password</h2>
-        <form id="sign-up-form">
+        <form id="sign-up-form" onSubmit={handleSubmit}>
           <div className="relative mb-4">
             <input
               name="password"
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
               className="w-full px-3 py-2 border border-black rounded"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
             />
             <button
@@ -97,6 +94,4 @@ const EmployeeSignUp: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default EmployeeSignUp;
+}
