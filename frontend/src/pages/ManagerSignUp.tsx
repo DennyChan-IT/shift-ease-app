@@ -1,11 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Clerk } from "@clerk/clerk-js";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import logo from "../assets/logo.png";
 
 const pubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 const clerk = new Clerk(pubKey);
 
 const ManagerSignUp: React.FC = () => {
+  const [showPassword, setShowPassword] = useState(false);
+
   useEffect(() => {
     // Load Clerk client once on mount
     clerk.load().catch((err) => console.error("Error loading Clerk:", err));
@@ -35,7 +38,9 @@ const ManagerSignUp: React.FC = () => {
             });
 
             if (signUpAttempt.status === "complete") {
-              await clerk.setActive({ session: signUpAttempt.createdSessionId });
+              await clerk.setActive({
+                session: signUpAttempt.createdSessionId,
+              });
               window.location.href = "/dashboard"; // Redirect to dashboard
             } else {
               console.error(
@@ -65,13 +70,23 @@ const ManagerSignUp: React.FC = () => {
         </p>
         <h2 className="text-left text-[14px] mb-0">Password</h2>
         <form id="sign-up-form">
-          <input
-            name="password"
-            type="password"
-            placeholder="Enter your password"
-            className="w-full px-3 py-2 mb-4 border border-black rounded"
-            required
-          />
+          <div className="relative mb-4">
+            <input
+              name="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter your password"
+              className="w-full px-3 py-2 border border-black rounded"
+              required
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-3 flex items-center"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <FiEyeOff /> : <FiEye />}
+            </button>
+          </div>
           <button
             type="submit"
             className="w-full py-2 bg-black text-white font-semibold rounded hover:bg-gray-800 transition"

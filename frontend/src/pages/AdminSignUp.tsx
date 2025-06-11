@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useSignUp } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import logo from "../assets/logo.png";
 
 export default function AdminSignUp() {
   const [emailAddress, setEmailAddress] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -86,7 +88,9 @@ export default function AdminSignUp() {
       <div className="flex items-center justify-center h-screen bg-slate-100">
         <div className="text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-black">
           <img src={logo} alt="App Logo" className="w-24 mx-auto mb-4" />
-          <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-black mb-4">Verify Email</h2>
+          <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-black mb-4">
+            Verify Email
+          </h2>
           {error && <p className="text-red-500">{error}</p>}
           <form onSubmit={handleVerify}>
             <label htmlFor="code">Enter Verification Code</label>
@@ -114,7 +118,9 @@ export default function AdminSignUp() {
     <div className="flex items-center justify-center h-screen bg-slate-100">
       <div className="text-center bg-white p-[30px] rounded-lg shadow-lg w-[380px] border-t-4 border-black">
         <img src={logo} alt="App Logo" className="w-24 mx-auto mb-4" />
-        <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-black mb-4">Admin Sign-Up</h2>
+        <h2 className="text-[28px] font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-black mb-4">
+          Admin Sign-Up
+        </h2>
         {error && <p className="text-red-500">{error}</p>}
         <form onSubmit={handleSubmit}>
           <label htmlFor="email">Enter Email Address</label>
@@ -126,13 +132,23 @@ export default function AdminSignUp() {
             onChange={(e) => setEmailAddress(e.target.value)}
           />
           <label htmlFor="password">Enter Password</label>
-          <input
-            id="password"
-            type="password"
-            className="w-full px-3 py-2 mb-4 border border-black rounded"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+          <div className="relative mb-4">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              className="w-full px-3 py-2 border border-black rounded"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-3 flex items-center"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <FiEyeOff /> : <FiEye />}
+            </button>
+          </div>
           <button
             type="submit"
             className="w-full py-2 bg-black text-white font-semibold rounded hover:bg-gray-800 transition"

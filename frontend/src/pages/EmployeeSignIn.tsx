@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useSignIn } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 import logo from "../assets/logo.png";
 
 export default function EmployeeSignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null); // Error state now allows string or null
   const { isLoaded, signIn, setActive } = useSignIn();
   const navigate = useNavigate();
@@ -70,13 +72,23 @@ export default function EmployeeSignIn() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full px-3 py-2 mb-4 border border-black rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div className="relative mb-4">
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            className="w-full px-3 py-2 border border-black rounded"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            type="button"
+            className="absolute inset-y-0 right-3 flex items-center"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? <FiEyeOff /> : <FiEye />}
+          </button>
+        </div>
         <button
           onClick={handleSignIn}
           className="w-full py-2 bg-black text-white font-semibold rounded hover:bg-gray-800 transition"
